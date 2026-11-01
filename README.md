@@ -210,10 +210,22 @@ It is ISO-8601 **basic** (`yyyyMMddHHmmss`, no separators, no timezone, 24-hour)
 
 ---
 
+## License
+
+See individual repositories for license details. All projects are personal reference implementations built and tested against live (non-production) ServiceNow instances.
+
+---
+
+~~**Not a project — Appendix A (experimental only):** `ServiceNowDBIntegration` moved out of the list above; it is kept as a documented experiment on out-of-platform AI + Table API changes: [Appendix A](#appendix-a--experimental-only-out-of-platform-ai--table-api-changes).~~
+
+---
+
 <details>
-<summary><strong>Appendix A — EXPERIMENTAL ONLY: out-of-platform AI + Table API changes</strong> &nbsp;—&nbsp; <em>collapsed by default, click to expand</em></summary>
+<summary><s><strong>Appendix A — EXPERIMENTAL ONLY: out-of-platform AI + Table API changes</strong></s> &nbsp;—&nbsp; <em>archived experiment · collapsed by default, click to expand</em></summary>
 
 <a id="appendix-a--experimental-only-out-of-platform-ai--table-api-changes"></a>
+
+<del>
 
 > **Status: experimental. Not a recommended path for anything that must be promoted or supported.**
 > This is `ServiceNowDBIntegration` ([repo](https://github.com/eltonaguiar/ServiceNowDBIntegration)), kept as a documented experiment: is it effective to have an admin-granted, *outside-ServiceNow* AI agent modify the platform and auto-generate reporting objects?
@@ -257,14 +269,5 @@ For anything that must survive an instance refresh or be promoted:
 
 The experiment's honest verdict: **fast, clever, and not governable.** The round-trip verification idea is the piece worth keeping; the "let it write to the platform as admin" part is not.
 
+</del>
 </details>
-
----
-
-## License
-
-See individual repositories for license details. All projects are personal reference implementations built and tested against live (non-production) ServiceNow instances.
-
----
-
-~~**Not a project — Appendix A (experimental only):** `ServiceNowDBIntegration` moved out of the list above; it is kept as a documented experiment on out-of-platform AI + Table API changes: [Appendix A](#appendix-a--experimental-only-out-of-platform-ai--table-api-changes).~~
