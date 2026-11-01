@@ -59,7 +59,7 @@ This repository shows a complete **onChange client script + Script Include** pai
 ---
 
 <details>
-<summary><strong>2. ServiceNowMidServer <span>—</span> ARM64 MID Server + recovery runbook</strong> &nbsp;—&nbsp; <em>collapsed by default, click to expand</em></summary>
+<summary><strong>2. ServiceNowMidServer <span>—</span> ARM64 MID Server + recovery runbook <em>(prerequisite for #3 and #4)</em></strong> &nbsp;—&nbsp; <em>collapsed by default, click to expand</em></summary>
 
 <a id="2-servicenowmidserver"></a>
 
