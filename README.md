@@ -9,18 +9,20 @@ A curated collection of ServiceNow development, integration, and infrastructure 
 | # | Project | Focus | Key pieces (breadcrumbs) | Detail | Repo |
 |---|---|---|---|---|---|
 | **#1** | `glideajax-scriptinclude-onchange-incident-warning` | Warn when an assignee already has more than 10 active incidents | `IncidentUtils.getOpenIncidentCount()` · onChange client script on `assigned_to` · `getXMLAnswer()` callback · `GlideAggregate` COUNT on `incident` (`active = true`) | [read ↓](#1-glideajax-scriptinclude-onchange-incident-warning) | [repo ↗](https://github.com/eltonaguiar/glideajax-scriptinclude-onchange-incident-warning) |
-| **#2** | `ServiceNowJDBC` | MySQL → ServiceNow over **JDBC** (MID Server → Data Source → Import Set → Transform Map), plus the MID Server runbook | `sys_data_source` `torontoeventsv2` (JDBC, `org.mariadb.jdbc.Driver`, MID `win11-mid`) · **helper field `last_run_database_field = last_updated`** + the single `last_run_datetime` watermark parameter · staging `u_torontoevents2` · `TorontoEventsTransformMap` (**coalesce on `u_event_id`**) · target `u_torontoeventsfinal` | [read ↓](#2-servicenowjdbc) | [repo ↗](https://github.com/eltonaguiar/ServiceNowJDBC) |
-| **#3** | `ServiceNowScheduledExport` | Scheduled CSV export sets, delta exports, pre/post scripts, BI ingestion | `sys_export_definition` (`u_torontoeventsfinal`) · `sys_export_target` (`win11-mid`, `toronto/events`) · `sys_export_set` (`torontoevents.csv`, append timestamp) · `scheduled_data_export` (daily, delta on `sys_updated_on`) · conditional / pre / post scripts | [read ↓](#3-servicenowscheduledexport) | [repo ↗](https://github.com/eltonaguiar/ServiceNowScheduledExport) |
-| **#4** | `ServiceNowMidServer` | ARM64 MID Server on GX10 / Raspberry Pi / Apple Silicon | `setup-mid-fast.sh` · `mid-supervisor.sh` · ARM64 JDK 17 with `--add-opens` ×14 · `docker run --platform linux/arm64` · `ecc_agent` status verification | [read ↓](#4-servicenowmidserver) | [repo ↗](https://github.com/eltonaguiar/ServiceNowMidServer) |
+| **#2** | `ServiceNowMidServer` | ARM64 MID Server on GX10 / Raspberry Pi / Apple Silicon — **the prerequisite** both integrations below run through | `setup-mid-fast.sh` · `mid-supervisor.sh` (the wrapper-less replacement) · ARM64 JDK 17 with `--add-opens` ×14 · `docker run --platform linux/arm64 --restart unless-stopped` · MID `win11-mid` / `gx10-mid` · `ecc_agent` status verification | [read ↓](#2-servicenowmidserver) | [repo ↗](https://github.com/eltonaguiar/ServiceNowMidServer) |
+| **#3** | `ServiceNowJDBC` | MySQL → ServiceNow over **JDBC** — the **data source's *Use MID Server*** field points at `win11-mid` | `sys_data_source` `torontoeventsv2` (JDBC, `org.mariadb.jdbc.Driver`) · **helper field `last_run_database_field = last_updated`** + the single `last_run_datetime` watermark parameter · staging `u_torontoevents2` · `TorontoEventsTransformMap` (**coalesce on `u_event_id`**) · target `u_torontoeventsfinal` | [read ↓](#3-servicenowjdbc) | [repo ↗](https://github.com/eltonaguiar/ServiceNowJDBC) |
+| **#4** | `ServiceNowScheduledExport` | Scheduled CSV export sets — target is **File on MID Server** `win11-mid`, reading the table #3 fills | `sys_export_definition` (`u_torontoeventsfinal`) · `sys_export_target` (`win11-mid`, `toronto/events`) · `sys_export_set` (`torontoevents.csv`, append timestamp) · `scheduled_data_export` (daily, delta on `sys_updated_on`) · conditional / pre / post scripts | [read ↓](#4-servicenowscheduledexport) | [repo ↗](https://github.com/eltonaguiar/ServiceNowScheduledExport) |
 
-The numbers are the reading order, and they follow the data: **#1** is client-side behaviour on a single record,
-**#2** is how rows get *into* ServiceNow, **#3** is how they get *out*, **#4** is the machine that makes **#2** and **#3**
-possible. Section N below is the deep dive for row **#N**; each section links to the same material in that repo's own
-README (build order, parameters, watch-outs, validation).
+The numbers are a **dependency order**, not alphabetical. **#1** is client-side behaviour on a single record and
+stands alone. **#2 is the prerequisite**: the MID Server is the thing both integrations actually run through — the
+JDBC data source's *Use MID Server* field sends its SQL out through `win11-mid`, and the export target writes its CSV
+to that same MID's disk. So **#3** is how rows get *into* ServiceNow, and **#4** is how they get back out.
+Section N below is the deep dive for row **#N**; each links to the same material (build order, parameters,
+watch-outs, validation) in that repo's README.
 
 **Jump to:** [#1 GlideAjax](#1-glideajax-scriptinclude-onchange-incident-warning) ·
-[#2 JDBC import](#2-servicenowjdbc) · [#3 Export sets](#3-servicenowscheduledexport) ·
-[#4 MID Server](#4-servicenowmidserver) · [Quick skill summary](#quick-skill-summary) ·
+[#2 MID Server](#2-servicenowmidserver) · [#3 JDBC import](#3-servicenowjdbc) ·
+[#4 Export sets](#4-servicenowscheduledexport) · [Quick skill summary](#quick-skill-summary) ·
 [Appendix A](#appendix-a--experimental-only-out-of-platform-ai--table-api-changes)
 
 ---
@@ -52,112 +54,14 @@ This repository shows a complete **onChange client script + Script Include** pai
 
 </details>
 
-**[↑ Projects](#projects)** · next: **[#2 →](#2-servicenowjdbc)**
+**[↑ Projects](#projects)** · next: **[#2 →](#2-servicenowmidserver)**
 
 ---
 
 <details>
-<summary><strong>2. ServiceNowJDBC <span>—</span> JDBC import pipeline + MID Server runbook</strong> &nbsp;—&nbsp; <em>collapsed by default, click to expand</em></summary>
+<summary><strong>2. ServiceNowMidServer <span>—</span> ARM64 MID Server + recovery runbook</strong> &nbsp;—&nbsp; <em>collapsed by default, click to expand</em></summary>
 
-<a id="2-servicenowjdbc"></a>
-
-**Repo:** [https://github.com/eltonaguiar/ServiceNowJDBC](https://github.com/eltonaguiar/ServiceNowJDBC) · *MySQL → ServiceNow over JDBC + the MID Server runbook*
-
-**In the repo:** [build order — the 7 pages we visited ↗](https://github.com/eltonaguiar/ServiceNowJDBC#a-build-order--how-the-jdbc-import-was-wired) · [parameters ↗](https://github.com/eltonaguiar/ServiceNowJDBC#parameters-to-consider) · [what to watch out for ↗](https://github.com/eltonaguiar/ServiceNowJDBC#things-to-watch-out-for) · [validation ↗](https://github.com/eltonaguiar/ServiceNowJDBC#validation--four-checks-with-numbers-from-this-instance) · [where the "service" is + Linux autostart ↗](https://github.com/eltonaguiar/ServiceNowJDBC#part-c-where-the-service-is)
-
-**Skills demonstrated:** ServiceNow JDBC data sources (`sys_data_source`), MID-executed scheduled imports and import sets, transform maps with coalesce keys, table configuration, MySQL diagnostics, Docker/systemd operations, MID Server lifecycle troubleshooting.
-
-Two halves: **how the data gets in** (MySQL → ServiceNow over JDBC) and **how to keep the machinery alive** (the MID Server runbook), plus a walkthrough for people whose only mental model is `services.msc`.
-
-```
-MySQL  events_log                        (source of truth, ~12.2 K rows, unique event_id)
-  └─ JDBC Data Source  torontoeventsv2   executed by MID win11-mid, driver org.mariadb.jdbc.Driver
-       └─ Import Set staging  u_torontoevents2
-            └─ Transform Map  TorontoEventsTransformMap   coalesce on u_event_id
-                 └─ Table  u_torontoeventsfinal           (this is what [project #3](#3-servicenowscheduledexport) exports)
-```
-
-### Idempotency, and "only newer records" — one helper field, one parameter
-
-| Lever | Setting | Value here |
-|---|---|---|
-| Only newer rows | `use_last_run_datetime` + helper field `last_run_database_field` | `true` / **`last_updated`** |
-| The one parameter | `last_run_datetime` | `'2026-11-01 12:09:41'` (a single quoted datetime) |
-| No duplicates on re-delivery | `coalesce = true` on `sys_transform_entry` | `u_event_id` |
-
-1. **Newer only** — with *Use last run datetime* on and the helper field set to `last_updated`, ServiceNow appends
-   `AND last_updated >= '<last_run_datetime>'` to the `sql_statement`. That one parameter is the watermark (the
-   timestamp of the last successful run), so a daily import pulls the edits instead of the full table.
-2. **Idempotent** — the transform map coalesces on `u_event_id`, so a row delivered twice (overlapping window,
-   retry, manual *Execute Now*) **updates** the record instead of duplicating it. `COUNT(*)` and
-   `COUNT(DISTINCT u_event_id)` stay equal however often the import runs.
-3. **Recovery** — clearing `last_run_datetime` forces a full re-read. Handy after a broken window, but it
-   re-delivers everything, which is only safe because of (2).
-
-Also worth knowing: `u_last_updated` is a **string** (max 40) on the target table, not a date — it carries the
-MySQL text through untouched, so do date maths in the transform script rather than on that column.
-
-### The rest of the repo
-
-| Part | Content |
-|---|---|
-| A. Database | Connection (`mysql.50webs.com:3306` / `ejaguiar1_events`), `events_log` plus the bookkeeping tables, and a copy-paste query set — total vs distinct, freshness, upcoming, per month, per source, null dates. Gotchas: the date column is `event_date` (not `date`); `categories`/`tags` are JSON in text |
-| B. MID Server runbook | Why `docker ps` lies (PID 1 is a `tail`, the JVM can be dead), the real liveness test, `docker restart sn-mid`, verification via logs and `ecc_agent`, keystore / `401` / volume-ownership repairs, the wrapper-less root cause and `mid-supervisor.sh`, plus the Windows 11 `snc_mid` service |
-| C. [Linux for `services.msc` people ↗](https://github.com/eltonaguiar/ServiceNowJDBC#part-c-where-the-service-is) | *Where is the service?* — the four layers (systemd `docker.service` → container `sn-mid` → `mid-supervisor.sh` → `java`), **how boot autostart actually works** (`systemctl is-enabled docker` **and** `RestartPolicy=unless-stopped`), the optional `sn-mid.service` unit for a single `services.msc`-style row, a field-by-field Windows → Linux table (*Path to executable*, *Log On As*, *Startup type*, *Recovery*, *Event Viewer*), GUI routes, and why to re-run the setup script instead of hand-editing `config.xml` |
-
-</details>
-
-**[↑ Projects](#projects)** · next: **[#3 →](#3-servicenowscheduledexport)**
-
----
-
-<details>
-<summary><strong>3. ServiceNowScheduledExport <span>—</span> export sets, delta exports, BI ingestion</strong> &nbsp;—&nbsp; <em>collapsed by default, click to expand</em></summary>
-
-<a id="3-servicenowscheduledexport"></a>
-
-**Repo:** [https://github.com/eltonaguiar/ServiceNowScheduledExport](https://github.com/eltonaguiar/ServiceNowScheduledExport) · *System Export Sets, delta exports, and BI ingestion*
-
-**In the repo:** [build order — the 7 pages we visited ↗](https://github.com/eltonaguiar/ServiceNowScheduledExport#a-build-order--the-pages-to-visit-in-order) · [when to use export sets (and when not) ↗](https://github.com/eltonaguiar/ServiceNowScheduledExport#when-to-use-export-sets--and-when-not) · [Qlik Sense delta alternatives ↗](https://github.com/eltonaguiar/ServiceNowScheduledExport#alternatives-for-qlik-sense--loading-only-the-deltas)
-
-**Skills demonstrated:** System Export Sets (`sys_export_definition` → `sys_export_target` → `sys_export_set` → `scheduled_data_export`), delta exports and watermarks, conditional / pre-export / post-export scripts, CSV encoding and file-naming semantics, Power BI and Qlik Sense incremental ingestion patterns.
-
-**The thing everyone gets wrong first:** the exported file name.
-
-```
-torontoevents_20261101050335.csv
-└─────┬─────┘ └──────┬───────┘
-   File name       yyyyMMddHHmmss  =  2026-11-01 05:03:35
-```
-
-It is ISO-8601 **basic** (`yyyyMMddHHmmss`, no separators, no timezone, 24-hour), appended before the extension by the *Append timestamp* checkbox. The format is **not configurable**. Worse, the stamp is rendered in the **instance/user time zone**, not UTC — proved on this instance by pairing `sys_export_set_run` rows to the files on disk (run at `13:03:35` UTC → file named `…_050335.csv`, exactly 8 h apart, because the default time zone was US/Pacific). One export run therefore shows three different times: `13:04:06` UTC in the run history, `08:04:06` on a Toronto wall clock, `050406` in the file name. Setting `glide.sys.default.tz` (or the run-as user's Time zone) is the one-line fix.
-
-**What the repo covers**
-
-| Section | Content |
-|---|---|
-| Filename | Decoding the stamp, the time-zone trap with evidence, and the four levers you actually have (time zone, prefix/suffix, no stamp, rename on the file host) |
-| Architecture | The four-record model, and why a stale *definition* produces a perfectly valid file with the wrong columns |
-| Live config | The real values pulled from this instance: file name, format, max rows 100 K, display values on, MID `win11-mid`, path `toronto/events`, daily 08:00, delta on `sys_updated_on` |
-| Options reference | Every field of all four tables, what it does, and where to set it |
-| Delta exports | `Updated` vs `Created`, the watermark, the documented limits (no database views; cannot also filter on `sys_updated_on`), and how to force a full re-export |
-| Scripts | Conditional (skip a run when nothing changed), pre-export (validate), post-export (audit + alert), with working scripts and their hard limit — they run **server-side** and cannot touch the file on the MID |
-| Recipes | Rename/sortable names, never land an empty file, date-partitioned folders, retention, weekly-full + daily-delta, alerting on silence, human-shaped vs machine-shaped exports |
-| BI | Power BI (Folder connector, Windows-1252, `Group` by `sys_id` keeping max `sys_updated_on`, incremental refresh) and Qlik Sense (folder load, `Exists()` dedupe, incremental QVD) — with an incident-table example and the delta-vs-full cost table |
-| Troubleshooting | 12 symptom → cause → action rows, including the header-only 172-byte file and CSV mojibake |
-
-**The headline number:** on this instance a full export is 2,128,595 bytes and a "nothing changed" delta is **172 bytes** (header only). Delta for freshness, weekly full for truth, dedupe by `sys_id` — full accuracy at roughly 1–2 % of the bytes.
-
-</details>
-
-**[↑ Projects](#projects)** · next: **[#4 →](#4-servicenowmidserver)**
-
----
-
-<details>
-<summary><strong>4. ServiceNowMidServer <span>—</span> ARM64 MID Server + recovery runbook</strong> &nbsp;—&nbsp; <em>collapsed by default, click to expand</em></summary>
-
-<a id="4-servicenowmidserver"></a>
+<a id="2-servicenowmidserver"></a>
 
 **Repo:** [https://github.com/eltonaguiar/ServiceNowMidServer](https://github.com/eltonaguiar/ServiceNowMidServer) · *ARM64 MID Server on unconventional hardware, plus the recovery runbook*
 
@@ -198,24 +102,111 @@ Tested on an **NVIDIA DGX Spark / GX10** (GB10 Grace Blackwell, `aarch64`, Ubunt
 
 </details>
 
-**[↑ Projects](#projects)** · next: **[skills →](#quick-skill-summary)**
+**[↑ Projects](#projects)** · next: **[#3 →](#3-servicenowjdbc)**
 
 ---
 
-## Quick Skill Summary
+<details>
+<summary><strong>3. ServiceNowJDBC <span>—</span> JDBC import pipeline + MID Server runbook</strong> &nbsp;—&nbsp; <em>collapsed by default, click to expand</em></summary>
 
-Across all projects, the ServiceNow skills demonstrated include:
+<a id="3-servicenowjdbc"></a>
 
-- **Client-server integration** via GlideAjax and the Table API
-- **Schema management** (`sys_db_object`, `sys_dictionary`) — creating tables and columns programmatically
-- **Data integration** — Push (REST Import Set API), Pull (JDBC), Remote Table patterns, and scheduled file exports
-- **Data egress** — Export Sets, delta exports with watermarks, pre/post scripts, and BI ingestion (Power BI / Qlik)
-- **SQL diagnostics** — row counts, duplicates, freshness, and per-dimension rollups against the integration database
-- **ACL and security** — the platform restriction on REST ACL creation, minimum viable roles, credential isolation
-- **MID Server** deployment on non-standard architectures (ARM64) *and* operations (wrapper-less restart behaviour, keystore/401 repair, service-vs-container mental model)
-- **Plugin management** — ITOM Discovery installation, monitoring, and verification
-- **Infrastructure as code** for ServiceNow metadata — idempotent, dry-run-capable scripts *(experimental — see Appendix A)*
-- **Validation engineering** — round-trip data verification to catch silent precision loss
+**Depends on [#2 ServiceNowMidServer](#2-servicenowmidserver)** — the data source's *Use MID Server* field
+is what makes the SQL run from `win11-mid` on our network rather than from the instance.
+
+**Repo:** [https://github.com/eltonaguiar/ServiceNowJDBC](https://github.com/eltonaguiar/ServiceNowJDBC) · *MySQL → ServiceNow over JDBC + the MID Server runbook*
+
+**In the repo:** [build order — the 7 pages we visited ↗](https://github.com/eltonaguiar/ServiceNowJDBC#a-build-order--how-the-jdbc-import-was-wired) · [parameters ↗](https://github.com/eltonaguiar/ServiceNowJDBC#parameters-to-consider) · [what to watch out for ↗](https://github.com/eltonaguiar/ServiceNowJDBC#things-to-watch-out-for) · [validation ↗](https://github.com/eltonaguiar/ServiceNowJDBC#validation--four-checks-with-numbers-from-this-instance) · [where the "service" is + Linux autostart ↗](https://github.com/eltonaguiar/ServiceNowJDBC#part-c-where-the-service-is)
+
+**Skills demonstrated:** ServiceNow JDBC data sources (`sys_data_source`), MID-executed scheduled imports and import sets, transform maps with coalesce keys, table configuration, MySQL diagnostics, Docker/systemd operations, MID Server lifecycle troubleshooting.
+
+Two halves: **how the data gets in** (MySQL → ServiceNow over JDBC) and **how to keep the machinery alive** (the MID Server runbook), plus a walkthrough for people whose only mental model is `services.msc`.
+
+```
+MySQL  events_log                        (source of truth, ~12.2 K rows, unique event_id)
+  └─ JDBC Data Source  torontoeventsv2   executed by MID win11-mid, driver org.mariadb.jdbc.Driver
+       └─ Import Set staging  u_torontoevents2
+            └─ Transform Map  TorontoEventsTransformMap   coalesce on u_event_id
+                 └─ Table  u_torontoeventsfinal           (this is what [project #4](#4-servicenowscheduledexport) exports)
+```
+
+### Idempotency, and "only newer records" — one helper field, one parameter
+
+| Lever | Setting | Value here |
+|---|---|---|
+| Only newer rows | `use_last_run_datetime` + helper field `last_run_database_field` | `true` / **`last_updated`** |
+| The one parameter | `last_run_datetime` | `'2026-11-01 12:09:41'` (a single quoted datetime) |
+| No duplicates on re-delivery | `coalesce = true` on `sys_transform_entry` | `u_event_id` |
+
+1. **Newer only** — with *Use last run datetime* on and the helper field set to `last_updated`, ServiceNow appends
+   `AND last_updated >= '<last_run_datetime>'` to the `sql_statement`. That one parameter is the watermark (the
+   timestamp of the last successful run), so a daily import pulls the edits instead of the full table.
+2. **Idempotent** — the transform map coalesces on `u_event_id`, so a row delivered twice (overlapping window,
+   retry, manual *Execute Now*) **updates** the record instead of duplicating it. `COUNT(*)` and
+   `COUNT(DISTINCT u_event_id)` stay equal however often the import runs.
+3. **Recovery** — clearing `last_run_datetime` forces a full re-read. Handy after a broken window, but it
+   re-delivers everything, which is only safe because of (2).
+
+Also worth knowing: `u_last_updated` is a **string** (max 40) on the target table, not a date — it carries the
+MySQL text through untouched, so do date maths in the transform script rather than on that column.
+
+### The rest of the repo
+
+| Part | Content |
+|---|---|
+| A. Database | Connection (`mysql.50webs.com:3306` / `ejaguiar1_events`), `events_log` plus the bookkeeping tables, and a copy-paste query set — total vs distinct, freshness, upcoming, per month, per source, null dates. Gotchas: the date column is `event_date` (not `date`); `categories`/`tags` are JSON in text |
+| B. MID Server runbook | Why `docker ps` lies (PID 1 is a `tail`, the JVM can be dead), the real liveness test, `docker restart sn-mid`, verification via logs and `ecc_agent`, keystore / `401` / volume-ownership repairs, the wrapper-less root cause and `mid-supervisor.sh`, plus the Windows 11 `snc_mid` service |
+| C. [Linux for `services.msc` people ↗](https://github.com/eltonaguiar/ServiceNowJDBC#part-c-where-the-service-is) | *Where is the service?* — the four layers (systemd `docker.service` → container `sn-mid` → `mid-supervisor.sh` → `java`), **how boot autostart actually works** (`systemctl is-enabled docker` **and** `RestartPolicy=unless-stopped`), the optional `sn-mid.service` unit for a single `services.msc`-style row, a field-by-field Windows → Linux table (*Path to executable*, *Log On As*, *Startup type*, *Recovery*, *Event Viewer*), GUI routes, and why to re-run the setup script instead of hand-editing `config.xml` |
+
+</details>
+
+**[↑ Projects](#projects)** · next: **[#4 →](#4-servicenowscheduledexport)**
+
+---
+
+<details>
+<summary><strong>4. ServiceNowScheduledExport <span>—</span> export sets, delta exports, BI ingestion</strong> &nbsp;—&nbsp; <em>collapsed by default, click to expand</em></summary>
+
+<a id="4-servicenowscheduledexport"></a>
+
+**Depends on [#2 ServiceNowMidServer](#2-servicenowmidserver)** — the export target is *File on MID Server*
+(`win11-mid`, path `toronto/events`), so no MID means a `completed` history row and no file.
+
+**Repo:** [https://github.com/eltonaguiar/ServiceNowScheduledExport](https://github.com/eltonaguiar/ServiceNowScheduledExport) · *System Export Sets, delta exports, and BI ingestion*
+
+**In the repo:** [build order — the 7 pages we visited ↗](https://github.com/eltonaguiar/ServiceNowScheduledExport#a-build-order--the-pages-to-visit-in-order) · [when to use export sets (and when not) ↗](https://github.com/eltonaguiar/ServiceNowScheduledExport#when-to-use-export-sets--and-when-not) · [Qlik Sense delta alternatives ↗](https://github.com/eltonaguiar/ServiceNowScheduledExport#alternatives-for-qlik-sense--loading-only-the-deltas)
+
+**Skills demonstrated:** System Export Sets (`sys_export_definition` → `sys_export_target` → `sys_export_set` → `scheduled_data_export`), delta exports and watermarks, conditional / pre-export / post-export scripts, CSV encoding and file-naming semantics, Power BI and Qlik Sense incremental ingestion patterns.
+
+**The thing everyone gets wrong first:** the exported file name.
+
+```
+torontoevents_20261101050335.csv
+└─────┬─────┘ └──────┬───────┘
+   File name       yyyyMMddHHmmss  =  2026-11-01 05:03:35
+```
+
+It is ISO-8601 **basic** (`yyyyMMddHHmmss`, no separators, no timezone, 24-hour), appended before the extension by the *Append timestamp* checkbox. The format is **not configurable**. Worse, the stamp is rendered in the **instance/user time zone**, not UTC — proved on this instance by pairing `sys_export_set_run` rows to the files on disk (run at `13:03:35` UTC → file named `…_050335.csv`, exactly 8 h apart, because the default time zone was US/Pacific). One export run therefore shows three different times: `13:04:06` UTC in the run history, `08:04:06` on a Toronto wall clock, `050406` in the file name. Setting `glide.sys.default.tz` (or the run-as user's Time zone) is the one-line fix.
+
+**What the repo covers**
+
+| Section | Content |
+|---|---|
+| Filename | Decoding the stamp, the time-zone trap with evidence, and the four levers you actually have (time zone, prefix/suffix, no stamp, rename on the file host) |
+| Architecture | The four-record model, and why a stale *definition* produces a perfectly valid file with the wrong columns |
+| Live config | The real values pulled from this instance: file name, format, max rows 100 K, display values on, MID `win11-mid`, path `toronto/events`, daily 08:00, delta on `sys_updated_on` |
+| Options reference | Every field of all four tables, what it does, and where to set it |
+| Delta exports | `Updated` vs `Created`, the watermark, the documented limits (no database views; cannot also filter on `sys_updated_on`), and how to force a full re-export |
+| Scripts | Conditional (skip a run when nothing changed), pre-export (validate), post-export (audit + alert), with working scripts and their hard limit — they run **server-side** and cannot touch the file on the MID |
+| Recipes | Rename/sortable names, never land an empty file, date-partitioned folders, retention, weekly-full + daily-delta, alerting on silence, human-shaped vs machine-shaped exports |
+| BI | Power BI (Folder connector, Windows-1252, `Group` by `sys_id` keeping max `sys_updated_on`, incremental refresh) and Qlik Sense (folder load, `Exists()` dedupe, incremental QVD) — with an incident-table example and the delta-vs-full cost table |
+| Troubleshooting | 12 symptom → cause → action rows, including the header-only 172-byte file and CSV mojibake |
+
+**The headline number:** on this instance a full export is 2,128,595 bytes and a "nothing changed" delta is **172 bytes** (header only). Delta for freshness, weekly full for truth, dedupe by `sys_id` — full accuracy at roughly 1–2 % of the bytes.
+
+</details>
+
+**[↑ Projects](#projects)** · next: **[skills →](#quick-skill-summary)**
 
 ---
 
