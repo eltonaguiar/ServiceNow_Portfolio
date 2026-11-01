@@ -199,7 +199,10 @@ Across all projects, the ServiceNow skills demonstrated include:
 
 ---
 
-## Appendix A — EXPERIMENTAL ONLY: out-of-platform AI + Table API changes
+<details>
+<summary><strong>Appendix A — EXPERIMENTAL ONLY: out-of-platform AI + Table API changes</strong> &nbsp;—&nbsp; <em>collapsed by default, click to expand</em></summary>
+
+<a id="appendix-a--experimental-only-out-of-platform-ai--table-api-changes"></a>
 
 > **Status: experimental. Not a recommended path for anything that must be promoted or supported.**
 > This is `ServiceNowDBIntegration` ([repo](https://github.com/eltonaguiar/ServiceNowDBIntegration)), kept as a documented experiment: is it effective to have an admin-granted, *outside-ServiceNow* AI agent modify the platform and auto-generate reporting objects?
@@ -242,6 +245,8 @@ For anything that must survive an instance refresh or be promoted:
 4. Keep the probe/verification script either way — that part was unambiguously worth it.
 
 The experiment's honest verdict: **fast, clever, and not governable.** The round-trip verification idea is the piece worth keeping; the "let it write to the platform as admin" part is not.
+
+</details>
 
 ---
 
