@@ -8,7 +8,7 @@ A curated collection of ServiceNow development, integration, and infrastructure 
 
 | Project | Focus | Status | Link |
 |---|---|---|---|
-| `servicenow_scriptincludesampleBETTER` | GlideAjax client-server scripting pattern | Complete | [servicenow_scriptincludesampleBETTER](https://github.com/eltonaguiar/servicenow_scriptincludesampleBETTER) |
+| `glideajax-scriptinclude-onchange-incident-warning` | GlideAjax Script Include + onChange client script - warns when an assignee already has more than 10 active incidents | Complete | [glideajax-scriptinclude-onchange-incident-warning](https://github.com/eltonaguiar/glideajax-scriptinclude-onchange-incident-warning) |
 | `ServiceNowJDBC` | Getting at the data and keeping the plumbing alive — events DB (MySQL) queries, MID Server runbook for Linux + Windows, beginner guide to where the "service" and its config actually live | Complete | [ServiceNowJDBC](https://github.com/eltonaguiar/ServiceNowJDBC) |
 | `ServiceNowScheduledExport` | System Export Sets — scheduled CSV exports to a MID Server, delta exports, conditional/pre/post scripts, Power BI / Qlik consumption | Complete | [ServiceNowScheduledExport](https://github.com/eltonaguiar/ServiceNowScheduledExport) |
 | `ServiceNowMidServer` | ARM64 MID Server (NVIDIA GX10 / Grace Blackwell, Raspberry Pi, Apple Silicon) | Complete | [ServiceNowMidServer](https://github.com/eltonaguiar/ServiceNowMidServer) |
@@ -17,7 +17,7 @@ A curated collection of ServiceNow development, integration, and infrastructure 
 
 ---
 
-## 1. servicenow_scriptincludesampleBETTER — Client-Server Scripting with GlideAjax
+## 1. glideajax-scriptinclude-onchange-incident-warning — GlideAjax Script Include + onChange Client Script
 
 **Skills demonstrated:** ServiceNow client scripts, Script Includes, GlideAjax, form client API (`g_form`), onChange client scripts, server-side data validation, asynchronous JavaScript callback patterns, scoped vs global application contexts.
 
