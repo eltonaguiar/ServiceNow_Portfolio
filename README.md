@@ -13,8 +13,6 @@ A curated collection of ServiceNow development, integration, and infrastructure 
 | `ServiceNowScheduledExport` | Scheduled CSV export sets, delta exports, pre/post scripts, BI ingestion | `sys_export_definition` (`u_torontoeventsfinal`) · `sys_export_target` (`win11-mid`, `toronto/events`) · `sys_export_set` (`torontoevents.csv`, append timestamp) · `scheduled_data_export` (daily, delta on `sys_updated_on`) · conditional / pre / post scripts | Complete | [repo](https://github.com/eltonaguiar/ServiceNowScheduledExport) |
 | `ServiceNowMidServer` | ARM64 MID Server on GX10 / Raspberry Pi / Apple Silicon | `setup-mid-fast.sh` · `mid-supervisor.sh` · ARM64 JDK 17 with `--add-opens` ×14 · `docker run --platform linux/arm64` · `ecc_agent` status verification | Complete | [repo](https://github.com/eltonaguiar/ServiceNowMidServer) |
 
-> **Not a project — Appendix A (experimental only):** `ServiceNowDBIntegration` moved out of the list above; it is kept as a documented experiment on out-of-platform AI + Table API changes: [Appendix A](#appendix-a--experimental-only-out-of-platform-ai--table-api-changes).
-
 ---
 
 ## 1. glideajax-scriptinclude-onchange-incident-warning — GlideAjax Script Include + onChange Client Script
@@ -216,3 +214,7 @@ The experiment's honest verdict: **fast, clever, and not governable.** The round
 ## License
 
 See individual repositories for license details. All projects are personal reference implementations built and tested against live (non-production) ServiceNow instances.
+
+---
+
+~~**Not a project — Appendix A (experimental only):** `ServiceNowDBIntegration` moved out of the list above; it is kept as a documented experiment on out-of-platform AI + Table API changes: [Appendix A](#appendix-a--experimental-only-out-of-platform-ai--table-api-changes).~~
