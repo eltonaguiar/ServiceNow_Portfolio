@@ -25,7 +25,10 @@ README (build order, parameters, watch-outs, validation).
 
 ---
 
-## 1. glideajax-scriptinclude-onchange-incident-warning
+<details>
+<summary><strong>1. glideajax-scriptinclude-onchange-incident-warning <span>—</span> GlideAjax Script Include + onChange client script</strong> &nbsp;—&nbsp; <em>collapsed by default, click to expand</em></summary>
+
+<a id="1-glideajax-scriptinclude-onchange-incident-warning"></a>
 
 **Repo:** [https://github.com/eltonaguiar/glideajax-scriptinclude-onchange-incident-warning](https://github.com/eltonaguiar/glideajax-scriptinclude-onchange-incident-warning) · *GlideAjax Script Include + onChange client script — warn-only guard on incident assignment*
 
@@ -47,11 +50,16 @@ This repository shows a complete **onChange client script + Script Include** pai
 - The difference between `global.AbstractAjaxProcessor` (scoped) and `AbstractAjaxProcessor` (global)
 - Why client-callable does **not** mean unrestricted access — authorization still matters
 
+</details>
+
 **[↑ Projects](#projects)** · next: **[#2 →](#2-servicenowjdbc)**
 
 ---
 
-## 2. ServiceNowJDBC
+<details>
+<summary><strong>2. ServiceNowJDBC <span>—</span> JDBC import pipeline + MID Server runbook</strong> &nbsp;—&nbsp; <em>collapsed by default, click to expand</em></summary>
+
+<a id="2-servicenowjdbc"></a>
 
 **Repo:** [https://github.com/eltonaguiar/ServiceNowJDBC](https://github.com/eltonaguiar/ServiceNowJDBC) · *MySQL → ServiceNow over JDBC + the MID Server runbook*
 
@@ -97,11 +105,16 @@ MySQL text through untouched, so do date maths in the transform script rather th
 | B. MID Server runbook | Why `docker ps` lies (PID 1 is a `tail`, the JVM can be dead), the real liveness test, `docker restart sn-mid`, verification via logs and `ecc_agent`, keystore / `401` / volume-ownership repairs, the wrapper-less root cause and `mid-supervisor.sh`, plus the Windows 11 `snc_mid` service |
 | C. Linux for `services.msc` people | Field-by-field mapping (service → container, *Path to executable* → `docker inspect`, *Log On As* → `Config.User`, *Automatic* → `RestartPolicy`), the four layers, GUI routes, and how to change the config safely |
 
+</details>
+
 **[↑ Projects](#projects)** · next: **[#3 →](#3-servicenowscheduledexport)**
 
 ---
 
-## 3. ServiceNowScheduledExport
+<details>
+<summary><strong>3. ServiceNowScheduledExport <span>—</span> export sets, delta exports, BI ingestion</strong> &nbsp;—&nbsp; <em>collapsed by default, click to expand</em></summary>
+
+<a id="3-servicenowscheduledexport"></a>
 
 **Repo:** [https://github.com/eltonaguiar/ServiceNowScheduledExport](https://github.com/eltonaguiar/ServiceNowScheduledExport) · *System Export Sets, delta exports, and BI ingestion*
 
@@ -135,11 +148,16 @@ It is ISO-8601 **basic** (`yyyyMMddHHmmss`, no separators, no timezone, 24-hour)
 
 **The headline number:** on this instance a full export is 2,128,595 bytes and a "nothing changed" delta is **172 bytes** (header only). Delta for freshness, weekly full for truth, dedupe by `sys_id` — full accuracy at roughly 1–2 % of the bytes.
 
+</details>
+
 **[↑ Projects](#projects)** · next: **[#4 →](#4-servicenowmidserver)**
 
 ---
 
-## 4. ServiceNowMidServer
+<details>
+<summary><strong>4. ServiceNowMidServer <span>—</span> ARM64 MID Server + recovery runbook</strong> &nbsp;—&nbsp; <em>collapsed by default, click to expand</em></summary>
+
+<a id="4-servicenowmidserver"></a>
 
 **Repo:** [https://github.com/eltonaguiar/ServiceNowMidServer](https://github.com/eltonaguiar/ServiceNowMidServer) · *ARM64 MID Server on unconventional hardware, plus the recovery runbook*
 
@@ -177,6 +195,8 @@ Tested on an **NVIDIA DGX Spark / GX10** (GB10 Grace Blackwell, `aarch64`, Ubunt
 
 ### Companion: ITOM Discovery guide
 `DISCOVERY.md` covers installing and running ITOM Discovery with this ARM64 MID — including how to distinguish the MID user (authenticates MID → instance) from Discovery credentials (how the MID logs into target hosts), and a troubleshooting matrix for the three different install-status sources (`sys_progress_worker` vs `sys_plugin_log` vs the stale console badge).
+
+</details>
 
 **[↑ Projects](#projects)** · next: **[skills →](#quick-skill-summary)**
 
