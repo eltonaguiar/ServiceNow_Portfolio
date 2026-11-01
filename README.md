@@ -6,12 +6,12 @@ A curated collection of ServiceNow development, integration, and infrastructure 
 
 ## Projects
 
-| Project | Focus | Status | Link |
-|---|---|---|---|
-| `glideajax-scriptinclude-onchange-incident-warning` | GlideAjax Script Include + onChange client script - warns when an assignee already has more than 10 active incidents | Complete | [glideajax-scriptinclude-onchange-incident-warning](https://github.com/eltonaguiar/glideajax-scriptinclude-onchange-incident-warning) |
-| `ServiceNowJDBC` | Getting at the data and keeping the plumbing alive — events DB (MySQL) queries, MID Server runbook for Linux + Windows, beginner guide to where the "service" and its config actually live | Complete | [ServiceNowJDBC](https://github.com/eltonaguiar/ServiceNowJDBC) |
-| `ServiceNowScheduledExport` | System Export Sets — scheduled CSV exports to a MID Server, delta exports, conditional/pre/post scripts, Power BI / Qlik consumption | Complete | [ServiceNowScheduledExport](https://github.com/eltonaguiar/ServiceNowScheduledExport) |
-| `ServiceNowMidServer` | ARM64 MID Server (NVIDIA GX10 / Grace Blackwell, Raspberry Pi, Apple Silicon) | Complete | [ServiceNowMidServer](https://github.com/eltonaguiar/ServiceNowMidServer) |
+| Project | Focus | Key pieces (breadcrumbs) | Status | Link |
+|---|---|---|---|---|
+| `glideajax-scriptinclude-onchange-incident-warning` | GlideAjax warning when an assignee already has more than 10 active incidents | `Script Include IncidentUtils.getOpenIncidentCount()` · onChange client script on `assigned_to` · `getXMLAnswer()` callback · `GlideAggregate` COUNT on `incident` (`active = true`) | Complete | [repo](https://github.com/eltonaguiar/glideajax-scriptinclude-onchange-incident-warning) |
+| `ServiceNowJDBC` | MySQL → ServiceNow import over **JDBC** (MID Server → Data Source → Import Set → Transform Map), plus the MID Server runbook | `sys_data_source` `torontoeventsv2` (JDBC, `org.mariadb.jdbc.Driver`, MID `win11-mid`) · `sql_statement` · **helper field `last_run_database_field = last_updated`** + the single `last_run_datetime` watermark parameter · staging `u_torontoevents2` · `TorontoEventsTransformMap` (**coalesce on `u_event_id`**) · target `u_torontoeventsfinal` · `docker restart sn-mid` | Complete | [repo](https://github.com/eltonaguiar/ServiceNowJDBC) |
+| `ServiceNowScheduledExport` | Scheduled CSV export sets, delta exports, pre/post scripts, BI ingestion | `sys_export_definition` (`u_torontoeventsfinal`) · `sys_export_target` (`win11-mid`, `toronto/events`) · `sys_export_set` (`torontoevents.csv`, append timestamp) · `scheduled_data_export` (daily, delta on `sys_updated_on`) · conditional / pre / post scripts | Complete | [repo](https://github.com/eltonaguiar/ServiceNowScheduledExport) |
+| `ServiceNowMidServer` | ARM64 MID Server on GX10 / Raspberry Pi / Apple Silicon | `setup-mid-fast.sh` · `mid-supervisor.sh` · ARM64 JDK 17 with `--add-opens` ×14 · `docker run --platform linux/arm64` · `ecc_agent` status verification | Complete | [repo](https://github.com/eltonaguiar/ServiceNowMidServer) |
 
 > **Not a project — Appendix A (experimental only):** `ServiceNowDBIntegration` moved out of the list above; it is kept as a documented experiment on out-of-platform AI + Table API changes: [Appendix A](#appendix-a--experimental-only-out-of-platform-ai--table-api-changes).
 
@@ -37,40 +37,47 @@ This repository shows a complete **onChange client script + Script Include** pai
 
 ---
 
-## 2. ServiceNowJDBC — Getting at the Data, and Keeping the Plumbing Alive
+## 2. ServiceNowJDBC — JDBC Import Pipeline + MID Server Runbook
 
-**Skills demonstrated:** MySQL/JDBC data access against the events database, SQL diagnostics (counts, duplicates, freshness, per-source/per-month rollups), Docker and systemd operations, MID Server lifecycle management, root-cause analysis of silent failures, runbook writing for people new to Linux.
+**Skills demonstrated:** ServiceNow JDBC data sources (`sys_data_source`), MID-executed scheduled imports and import sets, transform maps with coalesce keys, table configuration, MySQL diagnostics, Docker/systemd operations, MID Server lifecycle troubleshooting.
 
-**What it answers:** the two questions that come up the moment an integration goes quiet — *"is the data actually in the database?"* and *"is the thing that feeds it still running?"*
+Two halves: **how the data gets in** (MySQL → ServiceNow over JDBC) and **how to keep the machinery alive** (the MID Server runbook), plus a walkthrough for people whose only mental model is `services.msc`.
 
-### Part A — the events database
-
-| | |
-|---|---|
-| Host | `mysql.50webs.com:3306` (the web host itself sees it as `localhost`), MySQL 8.0.32 |
-| Database / user | `ejaguiar1_events` / `ejaguiar1_events` |
-| Main table | **`events_log`** — one row per event, ~12.2 K rows, unique key on `event_id` |
-| Bookkeeping tables | `event_pulls` (one row per ingest run, with `Inserted/Updated/Errors` notes), `event_sources`, `event_title_index`, `stats_summary` |
-
-The README carries a copy-paste query set — total vs distinct rows, freshness (`MAX(last_updated)`), upcoming volume, per-month and per-source rollups, null dates, duplicate detection — plus the two gotchas that bite every time: the date column is **`event_date`**, not `date`, and `categories`/`tags` are **JSON stored as text** (use `JSON_CONTAINS`, not `=`).
-
-### Part B — the MID Server runbook (Linux + Windows)
-
-The MID on this estate runs **wrapper-less** in Docker on ARM64 (GX10). That has one nasty consequence, and the README leads with it: when the instance tells the MID to restart itself, the JVM logs *"Wrapper-less MID Server cannot be automatically restarted… MANUALLY START THE MID SERVER TO CONTINUE"* and exits — while `docker ps` still reports the container as `Up`, because PID 1 is the log `tail`, not the JVM. The instance shows `Status: Down` while the box looks healthy.
-
-The fix is one command, and the README says so before explaining anything else:
-
-```bash
-docker restart sn-mid
+```
+MySQL  events_log                        (source of truth, ~12.2 K rows, unique event_id)
+  └─ JDBC Data Source  torontoeventsv2   executed by MID win11-mid, driver org.mariadb.jdbc.Driver
+       └─ Import Set staging  u_torontoevents2
+            └─ Transform Map  TorontoEventsTransformMap   coalesce on u_event_id
+                 └─ Table  u_torontoeventsfinal           (this is what project 3 exports)
 ```
 
-then verification that actually proves recovery (new JVM PID, `MID Server is connected to instance host`, `Operational State=UP`, and the `ecc_agent` API showing `status: Up / validated: true`). Beyond that it covers stale pid files, keystore/`401` repairs, volume ownership, relaunching the supervisor, an optional watchdog, restoring from a dead MID, and the Windows 11 equivalent (`snc_mid` service, wrapper path, `sc query` / `net stop` / `net start`).
+### Idempotency, and "only newer records" — one helper field, one parameter
 
-### Part C — "where is the service?" for people new to Linux
+| Lever | Setting | Value here |
+|---|---|---|
+| Only newer rows | `use_last_run_datetime` + helper field `last_run_database_field` | `true` / **`last_updated`** |
+| The one parameter | `last_run_datetime` | `'2026-11-01 12:09:41'` (a single quoted datetime) |
+| No duplicates on re-delivery | `coalesce = true` on `sys_transform_entry` | `u_event_id` |
 
-A section written for someone whose only mental model is `services.msc`: a field-by-field mapping (service name → container, *Path to executable* → `docker inspect … {{.Path}} {{.Args}}`, *Log On As: Local System* → `Config.User` / the `mid` user, *Startup type: Automatic* → `RestartPolicy=unless-stopped`), the four layers (`systemd → docker.service → container → supervisor → java`), GUI routes (Docker Desktop, System Monitor, `sudo -E nautilus` on the volume), and how to change config safely — re-run the setup script for credentials rather than hand-editing, because hand-editing is what produces the keystore/401 failures.
+1. **Newer only** — with *Use last run datetime* on and the helper field set to `last_updated`, ServiceNow appends
+   `AND last_updated >= '<last_run_datetime>'` to the `sql_statement`. That one parameter is the watermark (the
+   timestamp of the last successful run), so a daily import pulls the edits instead of the full table.
+2. **Idempotent** — the transform map coalesces on `u_event_id`, so a row delivered twice (overlapping window,
+   retry, manual *Execute Now*) **updates** the record instead of duplicating it. `COUNT(*)` and
+   `COUNT(DISTINCT u_event_id)` stay equal however often the import runs.
+3. **Recovery** — clearing `last_run_datetime` forces a full re-read. Handy after a broken window, but it
+   re-delivers everything, which is only safe because of (2).
 
-**Companion:** `ServiceNowMidServer` is the build/installation repo (how to get an ARM64 MID running); `ServiceNowJDBC` is the operating repo (how to tell whether it is running and how to fix it).
+Also worth knowing: `u_last_updated` is a **string** (max 40) on the target table, not a date — it carries the
+MySQL text through untouched, so do date maths in the transform script rather than on that column.
+
+### The rest of the repo
+
+| Part | Content |
+|---|---|
+| A. Database | Connection (`mysql.50webs.com:3306` / `ejaguiar1_events`), `events_log` plus the bookkeeping tables, and a copy-paste query set — total vs distinct, freshness, upcoming, per month, per source, null dates. Gotchas: the date column is `event_date` (not `date`); `categories`/`tags` are JSON in text |
+| B. MID Server runbook | Why `docker ps` lies (PID 1 is a `tail`, the JVM can be dead), the real liveness test, `docker restart sn-mid`, verification via logs and `ecc_agent`, keystore / `401` / volume-ownership repairs, the wrapper-less root cause and `mid-supervisor.sh`, plus the Windows 11 `snc_mid` service |
+| C. Linux for `services.msc` people | Field-by-field mapping (service → container, *Path to executable* → `docker inspect`, *Log On As* → `Config.User`, *Automatic* → `RestartPolicy`), the four layers, GUI routes, and how to change the config safely |
 
 ---
 
