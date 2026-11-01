@@ -17,8 +17,9 @@ The numbers are a **dependency order**, not alphabetical. **#1** is client-side 
 stands alone. **#2 is the prerequisite**: the MID Server is the thing both integrations actually run through — the
 JDBC data source's *Use MID Server* field sends its SQL out through `win11-mid`, and the export target writes its CSV
 to that same MID's disk. So **#3** is how rows get *into* ServiceNow, and **#4** is how they get back out.
-Section N below is the deep dive for row **#N**; each links to the same material (build order, parameters,
-watch-outs, validation) in that repo's README.
+Section N below is the deep dive for row **#N**. Every repo now opens with a **prerequisites checklist** and then
+**numbered steps** — each step is a breadcrumb, its prerequisites, the fields to fill, one suggestion and a
+checkpoint — so the section here summarises and the repo is where you actually execute.
 
 **Jump to:** [#1 GlideAjax](#1-glideajax-scriptinclude-onchange-incident-warning) ·
 [#2 MID Server](#2-servicenowmidserver) · [#3 JDBC import](#3-servicenowjdbc) ·
@@ -34,7 +35,7 @@ watch-outs, validation) in that repo's README.
 
 **Repo:** [https://github.com/eltonaguiar/glideajax-scriptinclude-onchange-incident-warning](https://github.com/eltonaguiar/glideajax-scriptinclude-onchange-incident-warning) · *GlideAjax Script Include + onChange client script — warn-only guard on incident assignment*
 
-**In the repo:** [deployment order (breadcrumbs) ↗](https://github.com/eltonaguiar/glideajax-scriptinclude-onchange-incident-warning#how-to-deploy-this--order-of-operations) · [parameters to consider ↗](https://github.com/eltonaguiar/glideajax-scriptinclude-onchange-incident-warning#parameters-to-consider) · [watch-outs ↗](https://github.com/eltonaguiar/glideajax-scriptinclude-onchange-incident-warning#things-to-watch-out-for) · [5-minute validation ↗](https://github.com/eltonaguiar/glideajax-scriptinclude-onchange-incident-warning#validate-it-5-minutes-no-code)
+**In the repo:** [deployment order (breadcrumbs) ↗](https://github.com/eltonaguiar/glideajax-scriptinclude-onchange-incident-warning#how-to-deploy-this--order-of-operations) · [parameters to consider ↗](https://github.com/eltonaguiar/glideajax-scriptinclude-onchange-incident-warning#parameters-to-consider) · [watch-outs ↗](https://github.com/eltonaguiar/glideajax-scriptinclude-onchange-incident-warning#things-to-watch-out-for) · [5-minute validation ↗](https://github.com/eltonaguiar/glideajax-scriptinclude-onchange-incident-warning#validate-it-5-minutes-no-code) · [prerequisite checklist ↗](https://github.com/eltonaguiar/glideajax-scriptinclude-onchange-incident-warning#before-you-start--prerequisites-checklist)
 
 **Skills demonstrated:** ServiceNow client scripts, Script Includes, GlideAjax, form client API (`g_form`), onChange client scripts, server-side data validation, asynchronous JavaScript callback patterns, scoped vs global application contexts.
 
@@ -65,7 +66,7 @@ This repository shows a complete **onChange client script + Script Include** pai
 
 **Repo:** [https://github.com/eltonaguiar/ServiceNowMidServer](https://github.com/eltonaguiar/ServiceNowMidServer) · *ARM64 MID Server on unconventional hardware, plus the recovery runbook*
 
-**In the repo:** [order of operations — instance first, then the box ↗](https://github.com/eltonaguiar/ServiceNowMidServer#order-of-operations--instance-first-then-the-box) · [recovering a Down MID (the exact runbook) ↗](https://github.com/eltonaguiar/ServiceNowMidServer#recovering-a-down-mid--the-runbook-we-actually-ran) · [troubleshooting matrix ↗](https://github.com/eltonaguiar/ServiceNowMidServer#troubleshooting--every-error-we-hit)
+**In the repo:** [order of operations — instance first, then the box ↗](https://github.com/eltonaguiar/ServiceNowMidServer#order-of-operations--instance-first-then-the-box) · [recovering a Down MID (the exact runbook) ↗](https://github.com/eltonaguiar/ServiceNowMidServer#recovering-a-down-mid--the-runbook-we-actually-ran) · [troubleshooting matrix ↗](https://github.com/eltonaguiar/ServiceNowMidServer#troubleshooting--every-error-we-hit) · [prerequisite checklist ↗](https://github.com/eltonaguiar/ServiceNowMidServer#before-you-start--prerequisites-checklist)
 
 **Skills demonstrated:** ServiceNow MID Server, ARM64 architecture workarounds, Java/JDK management, Docker container operations, MID Server discovery, ITOM plugin management, troubleshooting production integration issues.
 
@@ -116,7 +117,7 @@ is what makes the SQL run from `win11-mid` on our network rather than from the i
 
 **Repo:** [https://github.com/eltonaguiar/ServiceNowJDBC](https://github.com/eltonaguiar/ServiceNowJDBC) · *MySQL → ServiceNow over JDBC + the MID Server runbook*
 
-**In the repo:** [build order — the 7 pages we visited ↗](https://github.com/eltonaguiar/ServiceNowJDBC#a-build-order--how-the-jdbc-import-was-wired) · [parameters ↗](https://github.com/eltonaguiar/ServiceNowJDBC#parameters-to-consider) · [what to watch out for ↗](https://github.com/eltonaguiar/ServiceNowJDBC#things-to-watch-out-for) · [validation ↗](https://github.com/eltonaguiar/ServiceNowJDBC#validation--four-checks-with-numbers-from-this-instance) · [where the "service" is + Linux autostart ↗](https://github.com/eltonaguiar/ServiceNowJDBC#part-c-where-the-service-is)
+**In the repo:** [build order — the 7 pages we visited ↗](https://github.com/eltonaguiar/ServiceNowJDBC#a-build-order--how-the-jdbc-import-was-wired) · [parameters ↗](https://github.com/eltonaguiar/ServiceNowJDBC#parameters-to-consider) · [what to watch out for ↗](https://github.com/eltonaguiar/ServiceNowJDBC#things-to-watch-out-for) · [validation ↗](https://github.com/eltonaguiar/ServiceNowJDBC#validation--four-checks-with-numbers-from-this-instance) · [where the "service" is + Linux autostart ↗](https://github.com/eltonaguiar/ServiceNowJDBC#part-c-where-the-service-is) · [prerequisite checklist ↗](https://github.com/eltonaguiar/ServiceNowJDBC#before-you-start--prerequisites-checklist)
 
 **Skills demonstrated:** ServiceNow JDBC data sources (`sys_data_source`), MID-executed scheduled imports and import sets, transform maps with coalesce keys, table configuration, MySQL diagnostics, Docker/systemd operations, MID Server lifecycle troubleshooting.
 
@@ -154,9 +155,11 @@ MySQL text through untouched, so do date maths in the transform script rather th
 
 | Part | Content |
 |---|---|
-| A. Database | Connection (`mysql.50webs.com:3306` / `ejaguiar1_events`), `events_log` plus the bookkeeping tables, and a copy-paste query set — total vs distinct, freshness, upcoming, per month, per source, null dates. Gotchas: the date column is `event_date` (not `date`); `categories`/`tags` are JSON in text |
-| B. MID Server runbook | Why `docker ps` lies (PID 1 is a `tail`, the JVM can be dead), the real liveness test, `docker restart sn-mid`, verification via logs and `ecc_agent`, keystore / `401` / volume-ownership repairs, the wrapper-less root cause and `mid-supervisor.sh`, plus the Windows 11 `snc_mid` service |
-| C. [Linux for `services.msc` people ↗](https://github.com/eltonaguiar/ServiceNowJDBC#part-c-where-the-service-is) | *Where is the service?* — the four layers (systemd `docker.service` → container `sn-mid` → `mid-supervisor.sh` → `java`), **how boot autostart actually works** (`systemctl is-enabled docker` **and** `RestartPolicy=unless-stopped`), the optional `sn-mid.service` unit for a single `services.msc`-style row, a field-by-field Windows → Linux table (*Path to executable*, *Log On As*, *Startup type*, *Recovery*, *Event Viewer*), GUI routes, and why to re-run the setup script instead of hand-editing `config.xml` |
+| A. Build order | The 7 records to create, in order — each with its breadcrumb, **prerequisites**, **fields to fill**, a suggestion and a checkpoint: data source → watermark → staging → transform map → target table → schedule → verification |
+| B. Screenshots | The same build as pictures, labelled `1A`–`6B`, with the breadcrumb above each and a caption of what it proves |
+| 1. Database | Connection (`mysql.50webs.com:3306` / `ejaguiar1_events`), `events_log` plus the bookkeeping tables, and a copy-paste query set — total vs distinct, freshness, upcoming, per month, per source, null dates. Gotchas: the date column is `event_date` (not `date`); `categories`/`tags` are JSON in text |
+| 2. MID Server runbook | Why `docker ps` lies (PID 1 is a `tail`, the JVM can be dead), the real liveness test, `docker restart sn-mid`, verification via logs and `ecc_agent`, keystore / `401` / volume-ownership repairs, the wrapper-less root cause and `mid-supervisor.sh`, plus the Windows 11 `snc_mid` service |
+| 3. [Linux for `services.msc` people ↗](https://github.com/eltonaguiar/ServiceNowJDBC#part-c-where-the-service-is) | *Where is the service?* — the four layers (systemd `docker.service` → container `sn-mid` → `mid-supervisor.sh` → `java`), **how boot autostart actually works** (`systemctl is-enabled docker` **and** `RestartPolicy=unless-stopped`), the optional `sn-mid.service` unit for a single `services.msc`-style row, a field-by-field Windows → Linux table (*Path to executable*, *Log On As*, *Startup type*, *Recovery*, *Event Viewer*), GUI routes, and why to re-run the setup script instead of hand-editing `config.xml` |
 
 </details>
 
@@ -174,7 +177,7 @@ MySQL text through untouched, so do date maths in the transform script rather th
 
 **Repo:** [https://github.com/eltonaguiar/ServiceNowScheduledExport](https://github.com/eltonaguiar/ServiceNowScheduledExport) · *System Export Sets, delta exports, and BI ingestion*
 
-**In the repo:** [build order — the 7 pages we visited ↗](https://github.com/eltonaguiar/ServiceNowScheduledExport#a-build-order--the-pages-to-visit-in-order) · [when to use export sets (and when not) ↗](https://github.com/eltonaguiar/ServiceNowScheduledExport#when-to-use-export-sets--and-when-not) · [Qlik Sense delta alternatives ↗](https://github.com/eltonaguiar/ServiceNowScheduledExport#alternatives-for-qlik-sense--loading-only-the-deltas)
+**In the repo:** [build order — the 7 pages we visited ↗](https://github.com/eltonaguiar/ServiceNowScheduledExport#a-build-order--the-pages-to-visit-in-order) · [when to use export sets (and when not) ↗](https://github.com/eltonaguiar/ServiceNowScheduledExport#when-to-use-export-sets--and-when-not) · [Qlik Sense delta alternatives ↗](https://github.com/eltonaguiar/ServiceNowScheduledExport#alternatives-for-qlik-sense--loading-only-the-deltas) · [prerequisite checklist ↗](https://github.com/eltonaguiar/ServiceNowScheduledExport#before-you-start--prerequisites-checklist)
 
 **Skills demonstrated:** System Export Sets (`sys_export_definition` → `sys_export_target` → `sys_export_set` → `scheduled_data_export`), delta exports and watermarks, conditional / pre-export / post-export scripts, CSV encoding and file-naming semantics, Power BI and Qlik Sense incremental ingestion patterns.
 
@@ -192,6 +195,9 @@ It is ISO-8601 **basic** (`yyyyMMddHHmmss`, no separators, no timezone, 24-hour)
 
 | Section | Content |
 |---|---|
+| Prerequisites | The 6-item checklist at the top: role, a validated MID, a populated source table, a writable target folder, the time zone, and the consumer's value format |
+| Build order | The 7 pages in order, each with prerequisites, fields to fill, a suggestion and a checkpoint |
+| Fields to fill | A 25-row table covering every field on every form — what to put, and the note that matters |
 | Filename | Decoding the stamp, the time-zone trap with evidence, and the four levers you actually have (time zone, prefix/suffix, no stamp, rename on the file host) |
 | Architecture | The four-record model, and why a stale *definition* produces a perfectly valid file with the wrong columns |
 | Live config | The real values pulled from this instance: file name, format, max rows 100 K, display values on, MID `win11-mid`, path `toronto/events`, daily 08:00, delta on `sys_updated_on` |
