@@ -63,7 +63,7 @@ This repository shows a complete **onChange client script + Script Include** pai
 
 **Repo:** [https://github.com/eltonaguiar/ServiceNowJDBC](https://github.com/eltonaguiar/ServiceNowJDBC) · *MySQL → ServiceNow over JDBC + the MID Server runbook*
 
-**In the repo:** [build order — the 7 pages we visited ↗](https://github.com/eltonaguiar/ServiceNowJDBC#a-build-order--how-the-jdbc-import-was-wired) · [parameters ↗](https://github.com/eltonaguiar/ServiceNowJDBC#parameters-to-consider) · [what to watch out for ↗](https://github.com/eltonaguiar/ServiceNowJDBC#things-to-watch-out-for) · [validation ↗](https://github.com/eltonaguiar/ServiceNowJDBC#validation--four-checks-with-numbers-from-this-instance)
+**In the repo:** [build order — the 7 pages we visited ↗](https://github.com/eltonaguiar/ServiceNowJDBC#a-build-order--how-the-jdbc-import-was-wired) · [parameters ↗](https://github.com/eltonaguiar/ServiceNowJDBC#parameters-to-consider) · [what to watch out for ↗](https://github.com/eltonaguiar/ServiceNowJDBC#things-to-watch-out-for) · [validation ↗](https://github.com/eltonaguiar/ServiceNowJDBC#validation--four-checks-with-numbers-from-this-instance) · [where the "service" is + Linux autostart ↗](https://github.com/eltonaguiar/ServiceNowJDBC#part-c-where-the-service-is)
 
 **Skills demonstrated:** ServiceNow JDBC data sources (`sys_data_source`), MID-executed scheduled imports and import sets, transform maps with coalesce keys, table configuration, MySQL diagnostics, Docker/systemd operations, MID Server lifecycle troubleshooting.
 
@@ -103,7 +103,7 @@ MySQL text through untouched, so do date maths in the transform script rather th
 |---|---|
 | A. Database | Connection (`mysql.50webs.com:3306` / `ejaguiar1_events`), `events_log` plus the bookkeeping tables, and a copy-paste query set — total vs distinct, freshness, upcoming, per month, per source, null dates. Gotchas: the date column is `event_date` (not `date`); `categories`/`tags` are JSON in text |
 | B. MID Server runbook | Why `docker ps` lies (PID 1 is a `tail`, the JVM can be dead), the real liveness test, `docker restart sn-mid`, verification via logs and `ecc_agent`, keystore / `401` / volume-ownership repairs, the wrapper-less root cause and `mid-supervisor.sh`, plus the Windows 11 `snc_mid` service |
-| C. Linux for `services.msc` people | Field-by-field mapping (service → container, *Path to executable* → `docker inspect`, *Log On As* → `Config.User`, *Automatic* → `RestartPolicy`), the four layers, GUI routes, and how to change the config safely |
+| C. [Linux for `services.msc` people ↗](https://github.com/eltonaguiar/ServiceNowJDBC#part-c-where-the-service-is) | *Where is the service?* — the four layers (systemd `docker.service` → container `sn-mid` → `mid-supervisor.sh` → `java`), **how boot autostart actually works** (`systemctl is-enabled docker` **and** `RestartPolicy=unless-stopped`), the optional `sn-mid.service` unit for a single `services.msc`-style row, a field-by-field Windows → Linux table (*Path to executable*, *Log On As*, *Startup type*, *Recovery*, *Event Viewer*), GUI routes, and why to re-run the setup script instead of hand-editing `config.xml` |
 
 </details>
 
