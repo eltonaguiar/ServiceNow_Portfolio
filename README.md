@@ -6,16 +6,30 @@ A curated collection of ServiceNow development, integration, and infrastructure 
 
 ## Projects
 
-| Project | Focus | Key pieces (breadcrumbs) | Status | Link |
-|---|---|---|---|---|
-| `glideajax-scriptinclude-onchange-incident-warning` | GlideAjax warning when an assignee already has more than 10 active incidents | `Script Include IncidentUtils.getOpenIncidentCount()` · onChange client script on `assigned_to` · `getXMLAnswer()` callback · `GlideAggregate` COUNT on `incident` (`active = true`) | Complete | [repo](https://github.com/eltonaguiar/glideajax-scriptinclude-onchange-incident-warning) |
-| `ServiceNowJDBC` | MySQL → ServiceNow import over **JDBC** (MID Server → Data Source → Import Set → Transform Map), plus the MID Server runbook | `sys_data_source` `torontoeventsv2` (JDBC, `org.mariadb.jdbc.Driver`, MID `win11-mid`) · `sql_statement` · **helper field `last_run_database_field = last_updated`** + the single `last_run_datetime` watermark parameter · staging `u_torontoevents2` · `TorontoEventsTransformMap` (**coalesce on `u_event_id`**) · target `u_torontoeventsfinal` · `docker restart sn-mid` | Complete | [repo](https://github.com/eltonaguiar/ServiceNowJDBC) |
-| `ServiceNowScheduledExport` | Scheduled CSV export sets, delta exports, pre/post scripts, BI ingestion | `sys_export_definition` (`u_torontoeventsfinal`) · `sys_export_target` (`win11-mid`, `toronto/events`) · `sys_export_set` (`torontoevents.csv`, append timestamp) · `scheduled_data_export` (daily, delta on `sys_updated_on`) · conditional / pre / post scripts | Complete | [repo](https://github.com/eltonaguiar/ServiceNowScheduledExport) |
-| `ServiceNowMidServer` | ARM64 MID Server on GX10 / Raspberry Pi / Apple Silicon | `setup-mid-fast.sh` · `mid-supervisor.sh` · ARM64 JDK 17 with `--add-opens` ×14 · `docker run --platform linux/arm64` · `ecc_agent` status verification | Complete | [repo](https://github.com/eltonaguiar/ServiceNowMidServer) |
+| # | Project | Focus | Key pieces (breadcrumbs) | Detail | Repo |
+|---|---|---|---|---|---|
+| **#1** | `glideajax-scriptinclude-onchange-incident-warning` | Warn when an assignee already has more than 10 active incidents | `IncidentUtils.getOpenIncidentCount()` · onChange client script on `assigned_to` · `getXMLAnswer()` callback · `GlideAggregate` COUNT on `incident` (`active = true`) | [read ↓](#1-glideajax-scriptinclude-onchange-incident-warning) | [repo ↗](https://github.com/eltonaguiar/glideajax-scriptinclude-onchange-incident-warning) |
+| **#2** | `ServiceNowJDBC` | MySQL → ServiceNow over **JDBC** (MID Server → Data Source → Import Set → Transform Map), plus the MID Server runbook | `sys_data_source` `torontoeventsv2` (JDBC, `org.mariadb.jdbc.Driver`, MID `win11-mid`) · **helper field `last_run_database_field = last_updated`** + the single `last_run_datetime` watermark parameter · staging `u_torontoevents2` · `TorontoEventsTransformMap` (**coalesce on `u_event_id`**) · target `u_torontoeventsfinal` | [read ↓](#2-servicenowjdbc) | [repo ↗](https://github.com/eltonaguiar/ServiceNowJDBC) |
+| **#3** | `ServiceNowScheduledExport` | Scheduled CSV export sets, delta exports, pre/post scripts, BI ingestion | `sys_export_definition` (`u_torontoeventsfinal`) · `sys_export_target` (`win11-mid`, `toronto/events`) · `sys_export_set` (`torontoevents.csv`, append timestamp) · `scheduled_data_export` (daily, delta on `sys_updated_on`) · conditional / pre / post scripts | [read ↓](#3-servicenowscheduledexport) | [repo ↗](https://github.com/eltonaguiar/ServiceNowScheduledExport) |
+| **#4** | `ServiceNowMidServer` | ARM64 MID Server on GX10 / Raspberry Pi / Apple Silicon | `setup-mid-fast.sh` · `mid-supervisor.sh` · ARM64 JDK 17 with `--add-opens` ×14 · `docker run --platform linux/arm64` · `ecc_agent` status verification | [read ↓](#4-servicenowmidserver) | [repo ↗](https://github.com/eltonaguiar/ServiceNowMidServer) |
+
+The numbers are the reading order, and they follow the data: **#1** is client-side behaviour on a single record,
+**#2** is how rows get *into* ServiceNow, **#3** is how they get *out*, **#4** is the machine that makes **#2** and **#3**
+possible. Section N below is the deep dive for row **#N**; each section links to the same material in that repo's own
+README (build order, parameters, watch-outs, validation).
+
+**Jump to:** [#1 GlideAjax](#1-glideajax-scriptinclude-onchange-incident-warning) ·
+[#2 JDBC import](#2-servicenowjdbc) · [#3 Export sets](#3-servicenowscheduledexport) ·
+[#4 MID Server](#4-servicenowmidserver) · [Quick skill summary](#quick-skill-summary) ·
+[Appendix A](#appendix-a--experimental-only-out-of-platform-ai--table-api-changes)
 
 ---
 
-## 1. glideajax-scriptinclude-onchange-incident-warning — GlideAjax Script Include + onChange Client Script
+## 1. glideajax-scriptinclude-onchange-incident-warning
+
+**Repo:** [https://github.com/eltonaguiar/glideajax-scriptinclude-onchange-incident-warning](https://github.com/eltonaguiar/glideajax-scriptinclude-onchange-incident-warning) · *GlideAjax Script Include + onChange client script — warn-only guard on incident assignment*
+
+**In the repo:** [deployment order (breadcrumbs) ↗](https://github.com/eltonaguiar/glideajax-scriptinclude-onchange-incident-warning#how-to-deploy-this--order-of-operations) · [parameters to consider ↗](https://github.com/eltonaguiar/glideajax-scriptinclude-onchange-incident-warning#parameters-to-consider) · [watch-outs ↗](https://github.com/eltonaguiar/glideajax-scriptinclude-onchange-incident-warning#things-to-watch-out-for) · [5-minute validation ↗](https://github.com/eltonaguiar/glideajax-scriptinclude-onchange-incident-warning#validate-it-5-minutes-no-code)
 
 **Skills demonstrated:** ServiceNow client scripts, Script Includes, GlideAjax, form client API (`g_form`), onChange client scripts, server-side data validation, asynchronous JavaScript callback patterns, scoped vs global application contexts.
 
@@ -33,9 +47,15 @@ This repository shows a complete **onChange client script + Script Include** pai
 - The difference between `global.AbstractAjaxProcessor` (scoped) and `AbstractAjaxProcessor` (global)
 - Why client-callable does **not** mean unrestricted access — authorization still matters
 
+**[↑ Projects](#projects)** · next: **[#2 →](#2-servicenowjdbc)**
+
 ---
 
-## 2. ServiceNowJDBC — JDBC Import Pipeline + MID Server Runbook
+## 2. ServiceNowJDBC
+
+**Repo:** [https://github.com/eltonaguiar/ServiceNowJDBC](https://github.com/eltonaguiar/ServiceNowJDBC) · *MySQL → ServiceNow over JDBC + the MID Server runbook*
+
+**In the repo:** [build order — the 7 pages we visited ↗](https://github.com/eltonaguiar/ServiceNowJDBC#a-build-order--how-the-jdbc-import-was-wired) · [parameters ↗](https://github.com/eltonaguiar/ServiceNowJDBC#parameters-to-consider) · [what to watch out for ↗](https://github.com/eltonaguiar/ServiceNowJDBC#things-to-watch-out-for) · [validation ↗](https://github.com/eltonaguiar/ServiceNowJDBC#validation--four-checks-with-numbers-from-this-instance)
 
 **Skills demonstrated:** ServiceNow JDBC data sources (`sys_data_source`), MID-executed scheduled imports and import sets, transform maps with coalesce keys, table configuration, MySQL diagnostics, Docker/systemd operations, MID Server lifecycle troubleshooting.
 
@@ -46,7 +66,7 @@ MySQL  events_log                        (source of truth, ~12.2 K rows, unique 
   └─ JDBC Data Source  torontoeventsv2   executed by MID win11-mid, driver org.mariadb.jdbc.Driver
        └─ Import Set staging  u_torontoevents2
             └─ Transform Map  TorontoEventsTransformMap   coalesce on u_event_id
-                 └─ Table  u_torontoeventsfinal           (this is what project 3 exports)
+                 └─ Table  u_torontoeventsfinal           (this is what [project #3](#3-servicenowscheduledexport) exports)
 ```
 
 ### Idempotency, and "only newer records" — one helper field, one parameter
@@ -77,9 +97,15 @@ MySQL text through untouched, so do date maths in the transform script rather th
 | B. MID Server runbook | Why `docker ps` lies (PID 1 is a `tail`, the JVM can be dead), the real liveness test, `docker restart sn-mid`, verification via logs and `ecc_agent`, keystore / `401` / volume-ownership repairs, the wrapper-less root cause and `mid-supervisor.sh`, plus the Windows 11 `snc_mid` service |
 | C. Linux for `services.msc` people | Field-by-field mapping (service → container, *Path to executable* → `docker inspect`, *Log On As* → `Config.User`, *Automatic* → `RestartPolicy`), the four layers, GUI routes, and how to change the config safely |
 
+**[↑ Projects](#projects)** · next: **[#3 →](#3-servicenowscheduledexport)**
+
 ---
 
-## 3. ServiceNowScheduledExport — Export Sets, Delta Exports, and BI Ingestion
+## 3. ServiceNowScheduledExport
+
+**Repo:** [https://github.com/eltonaguiar/ServiceNowScheduledExport](https://github.com/eltonaguiar/ServiceNowScheduledExport) · *System Export Sets, delta exports, and BI ingestion*
+
+**In the repo:** [build order — the 7 pages we visited ↗](https://github.com/eltonaguiar/ServiceNowScheduledExport#a-build-order--the-pages-to-visit-in-order) · [when to use export sets (and when not) ↗](https://github.com/eltonaguiar/ServiceNowScheduledExport#when-to-use-export-sets--and-when-not) · [Qlik Sense delta alternatives ↗](https://github.com/eltonaguiar/ServiceNowScheduledExport#alternatives-for-qlik-sense--loading-only-the-deltas)
 
 **Skills demonstrated:** System Export Sets (`sys_export_definition` → `sys_export_target` → `sys_export_set` → `scheduled_data_export`), delta exports and watermarks, conditional / pre-export / post-export scripts, CSV encoding and file-naming semantics, Power BI and Qlik Sense incremental ingestion patterns.
 
@@ -109,9 +135,15 @@ It is ISO-8601 **basic** (`yyyyMMddHHmmss`, no separators, no timezone, 24-hour)
 
 **The headline number:** on this instance a full export is 2,128,595 bytes and a "nothing changed" delta is **172 bytes** (header only). Delta for freshness, weekly full for truth, dedupe by `sys_id` — full accuracy at roughly 1–2 % of the bytes.
 
+**[↑ Projects](#projects)** · next: **[#4 →](#4-servicenowmidserver)**
+
 ---
 
-## 4. ServiceNowMidServer — ARM64 MID Server on Unconventional Hardware
+## 4. ServiceNowMidServer
+
+**Repo:** [https://github.com/eltonaguiar/ServiceNowMidServer](https://github.com/eltonaguiar/ServiceNowMidServer) · *ARM64 MID Server on unconventional hardware, plus the recovery runbook*
+
+**In the repo:** [order of operations — instance first, then the box ↗](https://github.com/eltonaguiar/ServiceNowMidServer#order-of-operations--instance-first-then-the-box) · [recovering a Down MID (the exact runbook) ↗](https://github.com/eltonaguiar/ServiceNowMidServer#recovering-a-down-mid--the-runbook-we-actually-ran) · [troubleshooting matrix ↗](https://github.com/eltonaguiar/ServiceNowMidServer#troubleshooting--every-error-we-hit)
 
 **Skills demonstrated:** ServiceNow MID Server, ARM64 architecture workarounds, Java/JDK management, Docker container operations, MID Server discovery, ITOM plugin management, troubleshooting production integration issues.
 
@@ -145,6 +177,8 @@ Tested on an **NVIDIA DGX Spark / GX10** (GB10 Grace Blackwell, `aarch64`, Ubunt
 
 ### Companion: ITOM Discovery guide
 `DISCOVERY.md` covers installing and running ITOM Discovery with this ARM64 MID — including how to distinguish the MID user (authenticates MID → instance) from Discovery credentials (how the MID logs into target hosts), and a troubleshooting matrix for the three different install-status sources (`sys_progress_worker` vs `sys_plugin_log` vs the stale console badge).
+
+**[↑ Projects](#projects)** · next: **[skills →](#quick-skill-summary)**
 
 ---
 
