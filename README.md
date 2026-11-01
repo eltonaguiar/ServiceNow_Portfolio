@@ -216,9 +216,7 @@ See individual repositories for license details. All projects are personal refer
 
 ---
 
-~~**Not a project — Appendix A (experimental only):** `ServiceNowDBIntegration` moved out of the list above; it is kept as a documented experiment on out-of-platform AI + Table API changes: [Appendix A](#appendix-a--experimental-only-out-of-platform-ai--table-api-changes).~~
-
----
+~~**Not a project — Appendix A (experimental only).** `ServiceNowDBIntegration` was taken out of the list above and is kept here, underneath, as a documented experiment on out-of-platform AI + Table API changes. Expand the block below for what was tried, the real pros, the disqualifying cons, and the verdict.~~
 
 <details>
 <summary><s><strong>Appendix A — EXPERIMENTAL ONLY: out-of-platform AI + Table API changes</strong></s> &nbsp;—&nbsp; <em>archived experiment · collapsed by default, click to expand</em></summary>
