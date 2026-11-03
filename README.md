@@ -4,24 +4,6 @@ A curated collection of ServiceNow development, integration, and infrastructure 
 
 ---
 
-
-## Quick Discovery
-
-Hands-on Quick Discovery against a mixed lab (Windows MID on Windows 11 + Linux MID on ASUS GX10), including the resulting Computer CI, ECC Queue probes, Windows Classify probe, MID Server capability differences (Windows vs Linux vs Mac), and how to scan a whole subnet instead of one IP at a time.
-
-**Repo:** [https://github.com/eltonaguiar/ServiceNow_QuickDiscovery](https://github.com/eltonaguiar/ServiceNow_QuickDiscovery)
-
----
-
-
-## Remote Table
-
-Live external data inside ServiceNow using a Remote Table Definition (Pollinations AI example + MySQL/PHP pattern). Includes GitHub Pages version.
-
-**Repo:** [https://github.com/eltonaguiar/ServiceNow-Remote-Table](https://github.com/eltonaguiar/ServiceNow-Remote-Table)
-
----
-
 ## Projects
 
 | # | Project | Focus | Key pieces (breadcrumbs) | Detail | Repo |
@@ -31,6 +13,7 @@ Live external data inside ServiceNow using a Remote Table Definition (Pollinatio
 | **#3** | `ServiceNowJDBC` | MySQL → ServiceNow over **JDBC** — the **data source's *Use MID Server*** field points at `win11-mid` | `sys_data_source` `torontoeventsv2` (JDBC, `org.mariadb.jdbc.Driver`) · **helper field `last_run_database_field = last_updated`** + the single `last_run_datetime` watermark parameter · staging `u_torontoevents2` · `TorontoEventsTransformMap` (**coalesce on `u_event_id`**) · target `u_torontoeventsfinal` | [read ↓](#3-servicenowjdbc) | [repo ↗](https://github.com/eltonaguiar/ServiceNowJDBC) |
 | **#4** | `ServiceNowScheduledExport` | Scheduled CSV export sets — target is **File on MID Server** `win11-mid`, reading the table #3 fills | `sys_export_definition` (`u_torontoeventsfinal`) · `sys_export_target` (`win11-mid`, `toronto/events`) · `sys_export_set` (`torontoevents.csv`, append timestamp) · `scheduled_data_export` (daily, delta on `sys_updated_on`) · conditional / pre / post scripts | [read ↓](#4-servicenowscheduledexport) | [repo ↗](https://github.com/eltonaguiar/ServiceNowScheduledExport) |
 | **#5** | `ServiceNow_QuickDiscovery` | Quick Discovery of Windows + Linux hosts using two MID Servers | Windows MID (`win11-mid`) + Linux MID (`gx10-mid`) · Quick Discovery of known IPs · Windows Classify WMI probe · Linux Server horizontal pattern · CMDB Workspace related lists (file systems, processes, network adapters, DNS names) | [read ↓](#quick-discovery) | [repo ↗](https://github.com/eltonaguiar/ServiceNow_QuickDiscovery) |
+| **#6** | `ServiceNow-Remote-Table` | Remote Table showing live external data (Pollinations AI + MySQL/PHP) | Definition + `v_table.addRow()` · Pollinations keyless endpoint · Sys ID visibility via List Elements · Access controls · GitHub Pages version | [read ↓](#6-servicenow-remote-table) | [repo ↗](https://github.com/eltonaguiar/ServiceNow-Remote-Table) |
 
 The numbers are a **dependency order**, not alphabetical. **#1** is client-side behaviour on a single record and
 stands alone. **#2 is the prerequisite**: the MID Server is the thing both integrations actually run through — the
@@ -42,7 +25,7 @@ checkpoint — so the section here summarises and the repo is where you actually
 
 **Jump to:** [#1 GlideAjax](#1-glideajax-scriptinclude-onchange-incident-warning) ·
 [#2 MID Server](#2-servicenowmidserver) · [#3 JDBC import](#3-servicenowjdbc) ·
-[#4 Export sets](#4-servicenowscheduledexport) · [#5 Quick Discovery](#quick-discovery) · [Quick skill summary](#quick-skill-summary) ·
+[#4 Export sets](#4-servicenowscheduledexport) · [#5 Quick Discovery](#quick-discovery) · [#6 Remote Table](#6-servicenow-remote-table) · [Quick skill summary](#quick-skill-summary) ·
 [Appendix A](#appendix-a--experimental-only-out-of-platform-ai--table-api-changes)
 
 ---
@@ -255,6 +238,28 @@ Covers:
 - CMDB Workspace related lists (file systems, running processes, network adapters, software, memory)
 - How to scan a whole subnet instead of one IP at a time
 - MID Server capability differences (Windows vs Linux vs Mac)
+
+</details>
+
+**[↑ Projects](#projects)**
+
+---
+
+<details>
+<summary><strong>6. ServiceNow-Remote-Table <span>—</span> Remote Table with Pollinations AI</strong> &nbsp;—&nbsp; <em>collapsed by default, click to expand</em></summary>
+
+<a id="6-servicenow-remote-table"></a>
+
+**Repo:** [https://github.com/eltonaguiar/ServiceNow-Remote-Table](https://github.com/eltonaguiar/ServiceNow-Remote-Table)
+
+Live external data inside ServiceNow using a Remote Table Definition.
+
+- Calls the free Pollinations AI endpoint (`openai-fast`)
+- Uses `v_table.addRow()` and `v_query.setLastErrorMessage()`
+- Shows how to make `sys_id` visible via System UI → Lists → List Elements
+- Access control via a dedicated role
+- Independent of the MID Server
+- Includes a GitHub Pages version with dark/light mode
 
 </details>
 
