@@ -13,6 +13,15 @@ Hands-on Quick Discovery against a mixed lab (Windows MID on Windows 11 + Linux 
 
 ---
 
+
+## Remote Table
+
+Live external data inside ServiceNow using a Remote Table Definition (Pollinations AI example + MySQL/PHP pattern). Includes GitHub Pages version.
+
+**Repo:** [https://github.com/eltonaguiar/ServiceNow-Remote-Table](https://github.com/eltonaguiar/ServiceNow-Remote-Table)
+
+---
+
 ## Projects
 
 | # | Project | Focus | Key pieces (breadcrumbs) | Detail | Repo |
@@ -20,8 +29,8 @@ Hands-on Quick Discovery against a mixed lab (Windows MID on Windows 11 + Linux 
 | **#1** | `glideajax-scriptinclude-onchange-incident-warning` | Warn when an assignee already has more than 10 active incidents | `IncidentUtils.getOpenIncidentCount()` · onChange client script on `assigned_to` · `getXMLAnswer()` callback · `GlideAggregate` COUNT on `incident` (`active = true`) | [read ↓](#1-glideajax-scriptinclude-onchange-incident-warning) | [repo ↗](https://github.com/eltonaguiar/glideajax-scriptinclude-onchange-incident-warning) |
 | **#2** | `ServiceNowMidServer` | ARM64 MID Server on GX10 / Raspberry Pi / Apple Silicon — **the prerequisite** both integrations below run through | `setup-mid-fast.sh` · `mid-supervisor.sh` (the wrapper-less replacement) · ARM64 JDK 17 with `--add-opens` ×14 · `docker run --platform linux/arm64 --restart unless-stopped` · MID `win11-mid` / `gx10-mid` · `ecc_agent` status verification | [read ↓](#2-servicenowmidserver) | [repo ↗](https://github.com/eltonaguiar/ServiceNowMidServer) |
 | **#3** | `ServiceNowJDBC` | MySQL → ServiceNow over **JDBC** — the **data source's *Use MID Server*** field points at `win11-mid` | `sys_data_source` `torontoeventsv2` (JDBC, `org.mariadb.jdbc.Driver`) · **helper field `last_run_database_field = last_updated`** + the single `last_run_datetime` watermark parameter · staging `u_torontoevents2` · `TorontoEventsTransformMap` (**coalesce on `u_event_id`**) · target `u_torontoeventsfinal` | [read ↓](#3-servicenowjdbc) | [repo ↗](https://github.com/eltonaguiar/ServiceNowJDBC) |
-| **#5** | `ServiceNow_QuickDiscovery` | Quick Discovery of Windows + Linux hosts using two MID Servers | Windows MID (`win11-mid`) + Linux MID (`gx10-mid`) · Quick Discovery of known IPs · Windows Classify WMI probe · Linux Server horizontal pattern · CMDB Workspace related lists (file systems, processes, network adapters, DNS names) | [read ↓](#quick-discovery) | [repo ↗](https://github.com/eltonaguiar/ServiceNow_QuickDiscovery) |
 | **#4** | `ServiceNowScheduledExport` | Scheduled CSV export sets — target is **File on MID Server** `win11-mid`, reading the table #3 fills | `sys_export_definition` (`u_torontoeventsfinal`) · `sys_export_target` (`win11-mid`, `toronto/events`) · `sys_export_set` (`torontoevents.csv`, append timestamp) · `scheduled_data_export` (daily, delta on `sys_updated_on`) · conditional / pre / post scripts | [read ↓](#4-servicenowscheduledexport) | [repo ↗](https://github.com/eltonaguiar/ServiceNowScheduledExport) |
+| **#5** | `ServiceNow_QuickDiscovery` | Quick Discovery of Windows + Linux hosts using two MID Servers | Windows MID (`win11-mid`) + Linux MID (`gx10-mid`) · Quick Discovery of known IPs · Windows Classify WMI probe · Linux Server horizontal pattern · CMDB Workspace related lists (file systems, processes, network adapters, DNS names) | [read ↓](#quick-discovery) | [repo ↗](https://github.com/eltonaguiar/ServiceNow_QuickDiscovery) |
 
 The numbers are a **dependency order**, not alphabetical. **#1** is client-side behaviour on a single record and
 stands alone. **#2 is the prerequisite**: the MID Server is the thing both integrations actually run through — the
@@ -223,6 +232,33 @@ It is ISO-8601 **basic** (`yyyyMMddHHmmss`, no separators, no timezone, 24-hour)
 </details>
 
 **[↑ Projects](#projects)** · next: **[skills →](#quick-skill-summary)**
+
+---
+
+
+<details>
+<summary><strong>5. ServiceNow_QuickDiscovery <span>—</span> Quick Discovery of Windows + Linux hosts</strong> &nbsp;—&nbsp; <em>collapsed by default, click to expand</em></summary>
+
+<a id="quick-discovery"></a>
+
+**Repo:** [https://github.com/eltonaguiar/ServiceNow_QuickDiscovery](https://github.com/eltonaguiar/ServiceNow_QuickDiscovery)
+
+Hands-on Quick Discovery against a mixed lab:
+- Windows MID (`mid.server.win11-mid`) on Windows 11
+- Linux MID (`gx10-mid`) on ASUS GX10 / Ubuntu
+
+Covers:
+- Resulting Computer CI (`desktop-081g9oh`) and Linux Server CI (`gx10-c9b9`)
+- Discovery Log, Devices, ECC Queue
+- Windows Classify WMI probe
+- Linux Horizontal Discovery pattern and DNS Names related list
+- CMDB Workspace related lists (file systems, running processes, network adapters, software, memory)
+- How to scan a whole subnet instead of one IP at a time
+- MID Server capability differences (Windows vs Linux vs Mac)
+
+</details>
+
+**[↑ Projects](#projects)**
 
 ---
 
