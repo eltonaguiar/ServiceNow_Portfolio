@@ -397,6 +397,15 @@ The repo README now walks through three complete, working scripts rather than on
 - **Scheduled job** — backfills a table of addresses 50 rows per run (free ipinfo is rate limited), and reports
   `updated / failed / skipped` counts, where `skipped` covers private addresses that are not on the internet at all.
 
+**The opposite direction — when you would *publish* instead:** #7 only calls out. The "mirror image" is a
+Scripted REST API, and it is worth knowing when to reach for it: the moment an outside system needs the lookup and
+three of them would otherwise each hold their own copy of the HTTP client, the error handling and the API key. Then
+you publish `/api/x_1569490_iplookup/ipinfo/lookup?ip=…` — `sys_ws_definition` + `sys_ws_operation`, a resource
+script that calls the same `IpInfoLookup` Script Include, and a role on the resource that decides who may call it, so
+the caller needs one user and one role and no key at all. What you take on in exchange: that JSON shape is a contract
+you version, and the uptime is yours (a dead upstream becomes *your* `502`). Step-by-step lab, with the
+`401/403/404` map, is in the [ip-lookup README](https://github.com/eltonaguiar/servicenow-iplookup/blob/main/README.md#a3-scripted-rest-api--the-lab-servicenow-serves) (appendix A3).
+
 **What the source-control linkage gives you (and what it costs):**
 
 - `sn_source_control.properties` records the path to the app folder inside the repo (`path=79fe5701835fc750e958cd19feaad39d`).
