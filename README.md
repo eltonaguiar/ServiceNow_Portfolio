@@ -13,7 +13,7 @@ A curated collection of ServiceNow development, integration, and infrastructure 
 | **#3** | `ServiceNowJDBC` | MySQL → ServiceNow over **JDBC** — the **data source's *Use MID Server*** field points at `win11-mid` | `sys_data_source` `torontoeventsv2` (JDBC, `org.mariadb.jdbc.Driver`) · **helper field `last_run_database_field = last_updated`** + the single `last_run_datetime` watermark parameter · staging `u_torontoevents2` · `TorontoEventsTransformMap` (**coalesce on `u_event_id`**) · target `u_torontoeventsfinal` | [read ↓](#3-servicenowjdbc) | [repo ↗](https://github.com/eltonaguiar/ServiceNowJDBC) |
 | **#4** | `ServiceNowScheduledExport` | Scheduled CSV export sets — target is **File on MID Server** `win11-mid`, reading the table #3 fills | `sys_export_definition` (`u_torontoeventsfinal`) · `sys_export_target` (`win11-mid`, `toronto/events`) · `sys_export_set` (`torontoevents.csv`, append timestamp) · `scheduled_data_export` (daily, delta on `sys_updated_on`) · conditional / pre / post scripts | [read ↓](#4-servicenowscheduledexport) | [repo ↗](https://github.com/eltonaguiar/ServiceNowScheduledExport) |
 | **#5** | `ServiceNow_QuickDiscovery` | Quick Discovery of Windows + Linux hosts using two MID Servers | Windows MID (`win11-mid`) + Linux MID (`gx10-mid`) · Quick Discovery of known IPs · Windows Classify WMI probe · Linux Server horizontal pattern · CMDB Workspace related lists (file systems, processes, network adapters, DNS names) | [read ↓](#quick-discovery) | [repo ↗](https://github.com/eltonaguiar/ServiceNow_QuickDiscovery) |
-| **#6** | `ServiceNow-Remote-Table` | Remote Table showing live external data (Pollinations AI + MySQL/PHP) | Definition + `v_table.addRow()` · Pollinations keyless endpoint · Sys ID visibility via List Elements · Access controls · GitHub Pages version | [read ↓](#6-servicenow-remote-table) | [repo ↗](https://github.com/eltonaguiar/ServiceNow-Remote-Table) |
+| **#6** | `ServiceNow-Remote-Table` | Remote Table showing live external data (Pollinations AI + MySQL/PHP) | Definition + `v_table.addRow()` · Pollinations keyless endpoint · Sys ID visibility via List Elements · Access controls · GitHub Pages version · **`RESTMessageV2` from the same script** (see #7) | [read ↓](#6-servicenow-remote-table) | [repo ↗](https://github.com/eltonaguiar/ServiceNow-Remote-Table) |
 | **#7** | `servicenow-iplookup` | Outbound REST from a scoped app using **`sn_ws.RESTMessageV2`** — and the only repo here that GitHub holds because *ServiceNow* pushed it (Studio **source control linkage**) | `sys_rest_message` `IPInfo` (`https://ipinfo.io/`) · function `Default GET` → `GET https://ipinfo.io/${ipaddress}/json` · `setStringParameterNoEscape('ipaddress', …)` · `response.getBody()` · `sn_source_control.properties` · branches `sn_instances/dev213089` + `latest` | [read ↓](#7-servicenow-iplookup) | [repo ↗](https://github.com/eltonaguiar/servicenow-iplookup) |
 
 The numbers are a **dependency order**, not alphabetical. **#1** is client-side behaviour on a single record and
@@ -264,6 +264,28 @@ Live external data inside ServiceNow using a Remote Table Definition.
 - Access control via a dedicated role
 - Independent of the MID Server
 - Includes a GitHub Pages version with dark/light mode
+- **Related — the outbound half:** [#7 `servicenow-iplookup`](#7-servicenow-iplookup)
+
+**Where `RESTMessageV2` fits here.** The Remote Table's definition script is server-side JavaScript, so the
+same `sn_ws.RESTMessageV2` API used in #7 is available inside it: when the data source needs an auth profile,
+parameter substitution or one reusable message shared by several tables, call a REST Message instead of
+hand-rolling the HTTP request in the script.
+
+```javascript
+// inside a Remote Table definition script (v_table.addRow loop omitted).
+// Scope-qualify the message name when it lives in another app (as here);
+// that app must also mark it accessible, which is what its scope privileges do.
+var ipAddressFromQuery = '8.8.8.8';   // stand-in for the value your query returned
+var rm = new sn_ws.RESTMessageV2('x_1569490_iplookup.IPInfo', 'Default GET');
+rm.setStringParameterNoEscape('ipaddress', ipAddressFromQuery);
+var response = rm.execute();
+var payload = JSON.parse(response.getBody());
+v_table.addRow({ u_ip: payload.ip, u_city: payload.city, u_org: payload.org });
+```
+
+This is the outbound mirror of the inbound example above: #6 pulls outside data *into* a table, #7 calls an
+outside API *from* ServiceNow. Neither needs a MID Server, so both depend on the endpoint being reachable from
+the instance.
 
 </details>
 
