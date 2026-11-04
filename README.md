@@ -319,15 +319,35 @@ was written by ServiceNow itself rather than by hand.
 **The call:**
 
 ```javascript
+// 1. pick up the saved REST Message + one of its methods. Nothing is sent yet;
+//    the URL still holds the blank: https://ipinfo.io/${ipaddress}/json
 var r = new sn_ws.RESTMessageV2('x_1569490_iplookup.IPInfo', 'Default GET');
+
+// 2. fill the blank: first argument names it, second is the value. "NoEscape"
+//    sends it verbatim (the other variant URL-encodes). Now the URL is complete
+//    — https://ipinfo.io/8.8.8.8/json — but still unsent.
 r.setStringParameterNoEscape('ipaddress', '8.8.8.8');
+
+// 3. send it. The only line that touches the network, can be slow, and can fail
+//    before a reply exists. Now you hold the reply: status, headers, body.
 var response = r.execute();
+
+// 4. read the body as text (a string, not fields — JSON.parse() comes later in
+//    real code). Now: '{"ip":"8.8.8.8","hostname":"dns.google", ...}'
 var responseBody = response.getBody();
 
-// Throw the *successful* response so it lands in the modal dialog —
-// the fastest way to see the raw JSON with no logging or table setup.
+// 5. show it. A Fix Script only displays output when it reports a problem, so
+//    report the good answer on purpose. Testing trick, not production code.
 throw "Elton was here! Response: " + responseBody;
 ```
+
+| After | You have | Not yet |
+|---|---|---|
+| 1 | a prepared request pointing at a saved method | a value for the blank |
+| 2 | a complete URL (`r.getEndpoint()` shows it) | anything sent |
+| 3 | the reply object | the body split into fields |
+| 4 | the body as text | `city` / `org` as usable values |
+| 5 | the answer on screen | anything saved |
 
 **Why throw on purpose?** A Fix Script only shows you anything if the script reports a problem, so it reports the
 *good* answer just to get it on the screen. That is a testing trick, not how you would write code that runs all day —
