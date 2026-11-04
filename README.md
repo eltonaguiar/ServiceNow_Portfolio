@@ -14,6 +14,7 @@ A curated collection of ServiceNow development, integration, and infrastructure 
 | **#4** | `ServiceNowScheduledExport` | Scheduled CSV export sets — target is **File on MID Server** `win11-mid`, reading the table #3 fills | `sys_export_definition` (`u_torontoeventsfinal`) · `sys_export_target` (`win11-mid`, `toronto/events`) · `sys_export_set` (`torontoevents.csv`, append timestamp) · `scheduled_data_export` (daily, delta on `sys_updated_on`) · conditional / pre / post scripts | [read ↓](#4-servicenowscheduledexport) | [repo ↗](https://github.com/eltonaguiar/ServiceNowScheduledExport) |
 | **#5** | `ServiceNow_QuickDiscovery` | Quick Discovery of Windows + Linux hosts using two MID Servers | Windows MID (`win11-mid`) + Linux MID (`gx10-mid`) · Quick Discovery of known IPs · Windows Classify WMI probe · Linux Server horizontal pattern · CMDB Workspace related lists (file systems, processes, network adapters, DNS names) | [read ↓](#quick-discovery) | [repo ↗](https://github.com/eltonaguiar/ServiceNow_QuickDiscovery) |
 | **#6** | `ServiceNow-Remote-Table` | Remote Table showing live external data (Pollinations AI + MySQL/PHP) | Definition + `v_table.addRow()` · Pollinations keyless endpoint · Sys ID visibility via List Elements · Access controls · GitHub Pages version | [read ↓](#6-servicenow-remote-table) | [repo ↗](https://github.com/eltonaguiar/ServiceNow-Remote-Table) |
+| **#7** | `servicenow-iplookup` | Outbound REST from a scoped app using **`sn_ws.RESTMessageV2`** — and the only repo here that GitHub holds because *ServiceNow* pushed it (Studio **source control linkage**) | `sys_rest_message` `IPInfo` (`https://ipinfo.io/`) · function `Default GET` → `GET https://ipinfo.io/${ipaddress}/json` · `setStringParameterNoEscape('ipaddress', …)` · `response.getBody()` · `sn_source_control.properties` · branches `sn_instances/dev213089` + `latest` | [read ↓](#7-servicenow-iplookup) | [repo ↗](https://github.com/eltonaguiar/servicenow-iplookup) |
 
 The numbers are a **dependency order**, not alphabetical. **#1** is client-side behaviour on a single record and
 stands alone. **#2 is the prerequisite**: the MID Server is the thing both integrations actually run through — the
@@ -23,9 +24,12 @@ Section N below is the deep dive for row **#N**. Every repo now opens with a **p
 **numbered steps** — each step is a breadcrumb, its prerequisites, the fields to fill, one suggestion and a
 checkpoint — so the section here summarises and the repo is where you actually execute.
 
+**#6 and #7 are the two directions of the same idea:** #6 pulls outside data *into* ServiceNow through a Remote
+Table (inbound), #7 calls an outside API *from* ServiceNow with `RESTMessageV2` (outbound). Neither needs a MID Server.
+
 **Jump to:** [#1 GlideAjax](#1-glideajax-scriptinclude-onchange-incident-warning) ·
 [#2 MID Server](#2-servicenowmidserver) · [#3 JDBC import](#3-servicenowjdbc) ·
-[#4 Export sets](#4-servicenowscheduledexport) · [#5 Quick Discovery](#quick-discovery) · [#6 Remote Table](#6-servicenow-remote-table) · [Quick skill summary](#quick-skill-summary) ·
+[#4 Export sets](#4-servicenowscheduledexport) · [#5 Quick Discovery](#quick-discovery) · [#6 Remote Table](#6-servicenow-remote-table) · [#7 RESTMessageV2](#7-servicenow-iplookup) · [Quick skill summary](#quick-skill-summary) ·
 [Appendix A](#appendix-a--experimental-only-out-of-platform-ai--table-api-changes)
 
 ---
@@ -260,6 +264,65 @@ Live external data inside ServiceNow using a Remote Table Definition.
 - Access control via a dedicated role
 - Independent of the MID Server
 - Includes a GitHub Pages version with dark/light mode
+
+</details>
+
+**[↑ Projects](#projects)**
+
+---
+
+<details>
+<summary><strong>7. servicenow-iplookup <span>—</span> `RESTMessageV2` outbound REST, pushed to GitHub by source control</strong> &nbsp;—&nbsp; <em>collapsed by default, click to expand</em></summary>
+
+<a id="7-servicenow-iplookup"></a>
+
+**Repo:** [https://github.com/eltonaguiar/servicenow-iplookup](https://github.com/eltonaguiar/servicenow-iplookup)
+
+A scoped app (`IPLookup`, scope `x_1569490_iplookup`, v1.0.0) that calls ipinfo.io from server-side JavaScript with
+`sn_ws.RESTMessageV2` — the outbound mirror of #6's Remote Table. It is also the only project here whose Git history
+was written by ServiceNow itself rather than by hand.
+
+**Skills demonstrated:** outbound REST Messages (`sys_rest_message` / `sys_rest_message_fn` / parameters), `sn_ws.RESTMessageV2`, scoped-application REST access and scope privileges, ServiceNow Studio **source control linkage** (`sn_source_control.properties`, per-instance branches), and reading generated app XML well enough to audit it.
+
+**What is actually in the app** (every file below is generated XML under `79fe5701835fc750e958cd19feaad39d/`):
+
+| Record | Value |
+|---|---|
+| `sys_rest_message` | `IPInfo` → `https://ipinfo.io/`, `no_authentication`, access `package_private` |
+| `sys_rest_message_fn` | `Default GET` → `GET https://ipinfo.io/${ipaddress}/json`, `inherit_from_parent` auth, no MID Server |
+| `sys_rest_message_fn_parameters` ×3 | `ipaddress`, default `8.8.8.8` |
+| `sys_scope_privilege` ×4, `sys_user_role` ×2 | the cross-scope / role access the app needed |
+| `sys_script_fix` `Elton Test Integration` | the call itself — see below |
+
+**The call:**
+
+```javascript
+var r = new sn_ws.RESTMessageV2('x_1569490_iplookup.IPInfo', 'Default GET');
+r.setStringParameterNoEscape('ipaddress', '8.8.8.8');
+var response = r.execute();
+var responseBody = response.getBody();
+
+// Throw the *successful* response so it lands in the modal dialog —
+// the fastest way to see the raw JSON with no logging or table setup.
+throw "Elton was here! Response: " + responseBody;
+```
+
+Why the deliberate `throw`: a Fix Script's output is only surfaced when something is thrown, so throwing the 200
+response body turns the modal into a response viewer. It is a test harness, not production error handling.
+
+**What the source-control linkage gives you (and what it costs):**
+
+- `sn_source_control.properties` records the path to the app folder inside the repo (`path=79fe5701835fc750e958cd19feaad39d`).
+- ServiceNow writes a branch per instance (`sn_instances/dev213089`) plus `latest` — both currently carry the same snapshot.
+- Every save in Studio becomes a commit of generated XML plus `checksum.txt`; the repo's own `README.md` is ServiceNow-generated too and explicitly warns that hand-editing or merging files outside the instance makes the app un-importable (recover by reverting the offending commits).
+- Practical consequence: **do not hand-edit these files** — change the app in Studio and let the instance push, or the checksum no longer matches.
+
+**Lessons captured:**
+
+- `new sn_ws.RESTMessageV2('<scope>.<rest message name>', '<function name>')` — scope-qualified, and the function string is the `function_name`, not the qualified name.
+- `setStringParameterNoEscape()` vs the escaping variant: the no-escape form is what you want for a raw path segment like an IP address.
+- Auth belongs on the message (or an auth profile) with the function left on `inherit_from_parent` — swapping endpoints then does not mean re-entering credentials.
+- No MID Server is involved, so this only works for endpoints routable from the instance — the opposite constraint to #3 / #4, which need `win11-mid`.
 
 </details>
 
