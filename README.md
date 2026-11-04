@@ -329,8 +329,53 @@ var responseBody = response.getBody();
 throw "Elton was here! Response: " + responseBody;
 ```
 
-Why the deliberate `throw`: a Fix Script's output is only surfaced when something is thrown, so throwing the 200
-response body turns the modal into a response viewer. It is a test harness, not production error handling.
+**Why throw on purpose?** A Fix Script only shows you anything if the script reports a problem, so it reports the
+*good* answer just to get it on the screen. That is a testing trick, not how you would write code that runs all day —
+see the real examples below for that.
+
+**Why the address says `${ipaddress}`:** because it is a blank in a sentence, not a finished URL. `$` marks the blank,
+`{ipaddress}` is the name of the variable that fills it:
+
+```
+written:   https://ipinfo.io/${ipaddress}/json
+variable:  ipaddress = 8.8.8.8
+sent:      https://ipinfo.io/8.8.8.8/json
+```
+
+The blank is why one REST Message can look up *any* address. The name has to match on both sides — the method's
+variable and the text in the URL — or the literal `${ipaddress}` goes out on the wire and ipinfo.io replies that it is
+not an address.
+
+**What comes back** (real reply for `8.8.8.8`, Google's public DNS):
+
+```json
+{
+  "ip": "8.8.8.8", "hostname": "dns.google", "city": "Mountain View", "region": "California",
+  "country": "US", "loc": "37.4056,-122.0775", "org": "AS15169 Google LLC", "postal": "94043",
+  "timezone": "America/Los_Angeles", "readme": "https://ipinfo.io/missingauth", "anycast": true
+}
+```
+
+| Field | Meaning |
+|---|---|
+| `ip`, `hostname` | what you asked about, and its friendly name |
+| `city`, `region`, `country`, `postal`, `loc` | roughly where it is — `loc` is a map pin (lat,long), not a street address |
+| `org` | who runs that network; `AS15169` is the network's ID, `Google LLC` the company |
+| `timezone` | IANA zone, handy for "what time is it there?" |
+| `readme` | ipinfo saying *you are calling without a token* — expected here, not an error |
+| `anycast` | one address served from many places at once |
+
+**Real examples** (each one complete, not a fragment):
+
+The repo README now walks through three complete, working scripts rather than one throwaway test:
+
+- **Script Include `IpInfoLookup`** — one reusable `lookup(ip)` that never throws and always returns
+  `{ok, status, city, country, org, …}`, with an IPv4 check before spending a call and a `try/catch` around
+  `JSON.parse`.
+- **Business Rule** — fills `u_city` / `u_country` / `u_org` / `u_geo`, calls only when the address is new or changed,
+  and logs a warning instead of blocking the save when ipinfo is unreachable.
+- **Scheduled job** — backfills a table of addresses 50 rows per run (free ipinfo is rate limited), and reports
+  `updated / failed / skipped` counts, where `skipped` covers private addresses that are not on the internet at all.
 
 **What the source-control linkage gives you (and what it costs):**
 
