@@ -15,6 +15,7 @@ A curated collection of ServiceNow development, integration, and infrastructure 
 | **#5** | `ServiceNow_QuickDiscovery` | Quick Discovery of Windows + Linux hosts using two MID Servers | Windows MID (`win11-mid`) + Linux MID (`gx10-mid`) · Quick Discovery of known IPs · Windows Classify WMI probe · Linux Server horizontal pattern · CMDB Workspace related lists (file systems, processes, network adapters, DNS names) | [read ↓](#quick-discovery) | [repo ↗](https://github.com/eltonaguiar/ServiceNow_QuickDiscovery) |
 | **#6** | `ServiceNow-Remote-Table` | Remote Table showing live external data (Pollinations AI + MySQL/PHP) | Definition + `v_table.addRow()` · Pollinations keyless endpoint · Sys ID visibility via List Elements · Access controls · GitHub Pages version · **`RESTMessageV2` from the same script** (see #7) | [read ↓](#6-servicenow-remote-table) | [repo ↗](https://github.com/eltonaguiar/ServiceNow-Remote-Table) |
 | **#7** | `servicenow-iplookup` | Outbound REST from a scoped app using **`sn_ws.RESTMessageV2`** — and the only repo here that GitHub holds because *ServiceNow* pushed it (Studio **source control linkage**) | `sys_rest_message` `IPInfo` (`https://ipinfo.io/`) · function `Default GET` → `GET https://ipinfo.io/${ipaddress}/json` · `setStringParameterNoEscape('ipaddress', …)` · `response.getBody()` · `sn_source_control.properties` · branches `sn_instances/dev213089` + `latest` | [read ↓](#7-servicenow-iplookup) | [repo ↗](https://github.com/eltonaguiar/servicenow-iplookup) |
+| **#8** | `ServiceNow_ServiceGraph_Demo` | **Service Graph Connector for AWS** run end to end on a free PDI — no SCCM, no Windows Server, no MID Server. Companion lab: **[Service Graph Lab ↗](https://eltonaguiar.github.io/ServiceNow_ServiceGraph_Lab/)** (AI-drafted, then corrected by running it) | **Service Graph Connector for AWS** installed from the Store · IAM credential record + connection test · scheduled **Organization / Hardware** imports · record counts and the IRE inserted-vs-updated table as proof, not vibes — with the lab repo shipping `aws/lab-stack.yaml` (tagged EC2 + VPC to discover) and `aws/iam-readonly-lab-policy.json` | [read ↓](#servicenow_servicegraph_demo) | [repo ↗](https://github.com/eltonaguiar/ServiceNow_ServiceGraph_Demo) |
 
 The numbers are a **dependency order**, not alphabetical. **#1** is client-side behaviour on a single record and
 stands alone. **#2 is the prerequisite**: the MID Server is the thing both integrations actually run through — the
@@ -27,9 +28,15 @@ checkpoint — so the section here summarises and the repo is where you actually
 **#6 and #7 are the two directions of the same idea:** #6 pulls outside data *into* ServiceNow through a Remote
 Table (inbound), #7 calls an outside API *from* ServiceNow with `RESTMessageV2` (outbound). Neither needs a MID Server.
 
+**#8 needs no hardware at all** — the only prerequisite is a cloud account, and a new AWS account comes with
+$100–$200 of credit, so the whole CMDB exercise costs a rounding error instead of a server. It is also the only
+entry here that ships a **lab** alongside the repo: the same steps written for someone who has never opened a
+ServiceNow form, then edited after we ran every step on a PDI ourselves.
+
 **Jump to:** [#1 GlideAjax](#1-glideajax-scriptinclude-onchange-incident-warning) ·
 [#2 MID Server](#2-servicenowmidserver) · [#3 JDBC import](#3-servicenowjdbc) ·
-[#4 Export sets](#4-servicenowscheduledexport) · [#5 Quick Discovery](#quick-discovery) · [#6 Remote Table](#6-servicenow-remote-table) · [#7 RESTMessageV2](#7-servicenow-iplookup) · [Quick skill summary](#quick-skill-summary) ·
+[#4 Export sets](#4-servicenowscheduledexport) · [#5 Quick Discovery](#quick-discovery) · [#6 Remote Table](#6-servicenow-remote-table) · [#7 RESTMessageV2](#7-servicenow-iplookup) ·
+[#8 Service Graph Lab](#servicenow_servicegraph_demo) · [Quick skill summary](#quick-skill-summary) ·
 [Appendix A](#appendix-a--experimental-only-out-of-platform-ai--table-api-changes)
 
 ---
@@ -419,6 +426,81 @@ you version, and the uptime is yours (a dead upstream becomes *your* `502`). Ste
 - `setStringParameterNoEscape()` vs the escaping variant: the no-escape form is what you want for a raw path segment like an IP address.
 - Auth belongs on the message (or an auth profile) with the function left on `inherit_from_parent` — swapping endpoints then does not mean re-entering credentials.
 - No MID Server is involved, so this only works for endpoints routable from the instance — the opposite constraint to #3 / #4, which need `win11-mid`.
+
+</details>
+
+**[↑ Projects](#projects)**
+
+---
+
+<details>
+<summary><strong>8. ServiceNow_ServiceGraph_Demo <span>—</span> Service Graph Connector for AWS on a free PDI, budget-first</strong> &nbsp;—&nbsp; <em>collapsed by default, click to expand</em></summary>
+
+<a id="servicenow_servicegraph_demo"></a>
+
+**Repo:** [https://github.com/eltonaguiar/ServiceNow_ServiceGraph_Demo](https://github.com/eltonaguiar/ServiceNow_ServiceGraph_Demo) · *Service Graph Connector for AWS, run end to end on a free PDI*
+
+**The lab:** [https://eltonaguiar.github.io/ServiceNow_ServiceGraph_Lab/](https://eltonaguiar.github.io/ServiceNow_ServiceGraph_Lab/) — start at [prerequisites](https://eltonaguiar.github.io/ServiceNow_ServiceGraph_Lab/labs/00-prerequisites/), the proof-of-work stop is [Lab 4 · Run the import](https://eltonaguiar.github.io/ServiceNow_ServiceGraph_Lab/labs/04-run-import/)
+
+**Skills demonstrated:** cloud discovery without an agent on the host, Service Graph Connector for AWS (`sn_aws` / SGC Central) on a PDI, least-privilege read-only IAM policy design and credential records, CloudFormation provisioning with a tagging plan, scheduled imports with watermarking, **IRE** (Identification and Reconciliation Engine) identification rules, and building a CSDM application service over real CIs.
+
+Every other project here assumes you already own the ingredient it needs: a second Windows box for the MID
+([#2](#2-servicenowmidserver)), a hosted MySQL database ([#3](#3-servicenowjdbc)), a network of machines to discover
+([#5](#quick-discovery)). **#8 is the one that only needs a cloud account** — and a new AWS account arrives with
+**$100–$200 of credit**, which is what makes a real CMDB exercise reachable for someone with a laptop and no lab.
+
+### Why a Service Graph Connector instead of Discovery
+
+Discovery needs credentials *to the machines* and a MID Server near them. The Service Graph Connector asks the
+cloud provider's own API instead, so the "agent" is AWS itself: the instance never has to be reachable, patched,
+or even awake. For anyone whose lab is a Windows 11 laptop plus a PDI — no SCCM, no Windows Server, no vSphere —
+that is the difference between a CMDB you can build this afternoon and one you cannot build at all.
+
+### Status — honest as of 2026-11-07
+
+| Stage | State |
+|---|---|
+| **Labs 0–4**: prerequisites → AWS inventory (CloudFormation + tags) → SGC install → IAM connection → **run the import and verify the counts** | **done, run and corrected on a PDI** |
+| **Labs 5–11**: IRE rules ([5](https://eltonaguiar.github.io/ServiceNow_ServiceGraph_Lab/labs/05-ire/)), ETL mappings (6), CSDM graph (7), multi-source Azure (8), drift monitoring (9), troubleshooting (10), cleanup (11) | **in progress** — written, being worked through in order |
+
+So: the connector is installed, the AWS account is visible to ServiceNow, and EC2/VPC records exist in the CMDB
+with an import-set count and an IRE outcome to point at. Identification rules and the service model are next, not done.
+
+### What it costs, and the guardrails that make that true
+
+| Lever | Value | Why |
+|---|---|---|
+| Credit available | **$100–$200** on a new account (credit-based Free plan, ~6 months) | The lab runs on a slice of this, not on a card |
+| What it actually spends | **cents** — one small EC2 instance plus its VPC, and a public IPv4 at $0.005/h | The repo's own table prices 8 hours at roughly **$0.12**; the instance is stopped the same day |
+| Guardrail #1 | **Zero-spend budget** created *before* anything is launched, with the alert email verified | Budgets live in **Billing and Cost Management**, not on the Billing *Settings* page — the reason people think they set one and did not |
+| Guardrail #2 | One region for the whole lab (`ca-central-1`) | Multi-region imports multiply both the data and the surprises |
+| Guardrail #3 | Read-only IAM policy, shipped in the lab repo | A demo account that cannot be damaged by the connector, or by you |
+| Guardrail #4 | Lab 11 is cleanup | Nothing chargeable is left running when the lab ends |
+
+### The lab, and why it exists in this shape
+
+The lab was **drafted by AI and then edited by running it** — the corrections are the valuable part, and they are
+visible in the pages: the Store install that takes longer than the module suggests, the connection test that fails
+for a reason unrelated to the credentials, the import that says *completed* while the CMDB stays empty. That last
+distinction is the spine of [Lab 4](https://eltonaguiar.github.io/ServiceNow_ServiceGraph_Lab/labs/04-run-import/):
+**"the job ran" and "the data arrived" are two different claims**, and you are made to prove the second with numbers.
+
+| | ServiceNow Learning course | This lab |
+|---|---|---|
+| Environment | Shared simulation or licensed lab instance | **Your own** PDI + your own AWS account |
+| Proof it worked | A multiple-choice check | Record counts before/after and an IRE inserted-vs-updated table you read yourself |
+| When it breaks | Search the forum | [Lab 10](https://eltonaguiar.github.io/ServiceNow_ServiceGraph_Lab/labs/10-troubleshooting/) is a matrix of every failure this lab actually hit, with the fix |
+| Time to first CI | Hours of modules | **~40 minutes** (Labs 0–4) |
+
+What it is **not**: exam prep, or a reference architecture. It is a working pattern you have personally operated —
+which is the thing the certification material has nothing to attach to until you have done it once.
+
+**Where the files are:** the demo repo is the **walkthrough** — `README.md`, one light PoC pass through the lab with a
+screenshot per step and the cost warnings inline. The **artifacts** live in the lab repo:
+[`aws/lab-stack.yaml`](https://github.com/eltonaguiar/ServiceNow_ServiceGraph_Lab/blob/main/aws/lab-stack.yaml)
+(CloudFormation: tagged EC2 + VPC) and
+[`aws/iam-readonly-lab-policy.json`](https://github.com/eltonaguiar/ServiceNow_ServiceGraph_Lab/blob/main/aws/iam-readonly-lab-policy.json)
+(the least-privilege policy the connector reads through).
 
 </details>
 
