@@ -4,6 +4,23 @@ A curated collection of ServiceNow development, integration, and infrastructure 
 
 ---
 
+## Table of Contents
+
+- [Projects](#projects)
+- [Other Projects](#other-projects)
+- [Other — ServiceNow Documentation with TTS](#other-servicenow-documentation-with-tts)
+- [Deep Dives](#deep-dives)
+  - [1. glideajax-scriptinclude-onchange-incident-warning](#1-glideajax-scriptinclude-onchange-incident-warning)
+  - [2. ServiceNowMidServer](#2-servicenowmidserver)
+  - [3. ServiceNowJDBC](#3-servicenowjdbc)
+  - [4. ServiceNowScheduledExport](#4-servicenowscheduledexport)
+  - [5. ServiceNow_QuickDiscovery](#quick-discovery)
+  - [6. ServiceNow-Remote-Table](#6-servicenow-remote-table)
+  - [7. servicenow-iplookup](#7-servicenow-iplookup)
+  - [8. ServiceNow_ServiceGraph_Demo](#servicenow_servicegraph_demo)
+- [License](#license)
+- [Appendix A](#appendix-a--experimental-only-out-of-platform-ai--table-api-changes)
+
 ## Projects
 
 | # | Project | Focus | Key pieces (breadcrumbs) | Detail | Repo |
@@ -17,7 +34,16 @@ A curated collection of ServiceNow development, integration, and infrastructure 
 | **#7** | `servicenow-iplookup` | Outbound REST from a scoped app using **`sn_ws.RESTMessageV2`** — and the only repo here that GitHub holds because *ServiceNow* pushed it (Studio **source control linkage**) | `sys_rest_message` `IPInfo` (`https://ipinfo.io/`) · function `Default GET` → `GET https://ipinfo.io/${ipaddress}/json` · `setStringParameterNoEscape('ipaddress', …)` · `response.getBody()` · `sn_source_control.properties` · branches `sn_instances/dev213089` + `latest` | [read ↓](#7-servicenow-iplookup) | [repo ↗](https://github.com/eltonaguiar/servicenow-iplookup) |
 | **#8** | `ServiceNow_ServiceGraph_Demo` | **Service Graph Connector for AWS** run end to end on a free PDI — no SCCM, no Windows Server, no MID Server. Companion lab: **[Service Graph Lab ↗](https://eltonaguiar.github.io/ServiceNow_ServiceGraph_Lab/)** (AI-drafted, then corrected by running it) | **Service Graph Connector for AWS** installed from the Store · IAM credential record + connection test · scheduled **Organization / Hardware** imports · record counts and the IRE inserted-vs-updated table as proof, not vibes — with the lab repo shipping `aws/lab-stack.yaml` (tagged EC2 + VPC to discover) and `aws/iam-readonly-lab-policy.json` | [read ↓](#servicenow_servicegraph_demo) | [repo ↗](https://github.com/eltonaguiar/ServiceNow_ServiceGraph_Demo) |
 
-The numbers are a **dependency order**, not alphabetical. **#1** is client-side behaviour on a single record and
+The numbers are a **dependency order**, not alphabetical.
+
+## Other Projects
+
+A separate set of projects outside the ServiceNow platform — infrastructure, recovery, and tooling built and tested independently.
+
+| # | Project | Focus | What was done | Repo |
+|---|---------|-------|---------------|------|
+| **#O1** | `MiracleBoot v7.2.0` / BOOTFIXPREMIUM_GITHUB | Windows 10/11 boot recovery and repair toolkit | Built and tested in a virtual machine: simulated a broken Windows boot (corrupted BCD, missing boot files, wrong default boot entry pointing to WinRE), then used the tool to restore boot capability. Verified BCD repair, WinRE detection, driver injection (NVMe/RAID/Intel VMD), offline registry edits, and CMD-only emergency repairs. | [repo ↗](https://github.com/eltonaguiar/BOOTFIXPREMIUM_GITHUB) |
+**#1** is client-side behaviour on a single record and
 stands alone. **#2 is the prerequisite**: the MID Server is the thing both integrations actually run through — the
 JDBC data source's *Use MID Server* field sends its SQL out through `win11-mid`, and the export target writes its CSV
 to that same MID's disk. So **#3** is how rows get *into* ServiceNow, and **#4** is how they get back out.
@@ -36,7 +62,7 @@ ServiceNow form, then edited after we ran every step on a PDI ourselves.
 **Jump to:** [#1 GlideAjax](#1-glideajax-scriptinclude-onchange-incident-warning) ·
 [#2 MID Server](#2-servicenowmidserver) · [#3 JDBC import](#3-servicenowjdbc) ·
 [#4 Export sets](#4-servicenowscheduledexport) · [#5 Quick Discovery](#quick-discovery) · [#6 Remote Table](#6-servicenow-remote-table) · [#7 RESTMessageV2](#7-servicenow-iplookup) ·
-[#8 Service Graph Lab](#servicenow_servicegraph_demo) · [Quick skill summary](#quick-skill-summary) ·
+[#8 Service Graph Lab](#servicenow_servicegraph_demo) · [Other Projects](#other-projects) · [ServiceNow Docs with TTS](#other-servicenow-documentation-with-tts) · [Quick skill summary](#quick-skill-summary) ·
 [Appendix A](#appendix-a--experimental-only-out-of-platform-ai--table-api-changes)
 
 ---
@@ -507,6 +533,13 @@ screenshot per step and the cost warnings inline. The **artifacts** live in the 
 **[↑ Projects](#projects)**
 
 ---
+
+## Other — ServiceNow Documentation with TTS
+
+AI-generated ServiceNow documentation with text-to-speech, hosted on GitHub Pages. Beginner-friendly module guides covering TSOM, CSM, FSM, Sales CRM, HAM, ITSM, Discovery, Service Mapping, plus HRSD and an "Other" module guide. Each guide includes reusable code/metadata (Discovery Schedules, IP Ranges, IP range sets, Patterns, etc.), out-of-box features, key table hierarchies, hands-on labs, and quizzes. A built-in TTS panel reads any page aloud with click-to-jump navigation, voice/speed/volume controls, and section quick-nav.
+
+- **Live site:** https://eltonaguiar.github.io/ServiceNow_Learning_TSOM-_CSM_FSM_SalesCRM_HAM_ITSM/
+- **Discovery Guide (reusable code/metadata example):** https://eltonaguiar.github.io/ServiceNow_Learning_TSOM-_CSM_FSM_SalesCRM_HAM_ITSM/docs/modules/discovery/discovery-guide/#re-usable-code--metadata
 
 ## License
 
