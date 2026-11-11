@@ -43,6 +43,7 @@ A separate set of projects outside the ServiceNow platform — infrastructure, r
 | # | Project | Focus | What was done | Repo |
 |---|---------|-------|---------------|------|
 | **#O1** | `MiracleBoot v7.2.0` / BOOTFIXPREMIUM_GITHUB | Windows 10/11 boot recovery and repair toolkit | Built and tested in a virtual machine: simulated a broken Windows boot (corrupted BCD, missing boot files, wrong default boot entry pointing to WinRE), then used the tool to restore boot capability. Verified BCD repair, WinRE detection, driver injection (NVMe/RAID/Intel VMD), offline registry edits, and CMD-only emergency repairs. | [repo ↗](https://github.com/eltonaguiar/BOOTFIXPREMIUM_GITHUB) |
+
 **#1** is client-side behaviour on a single record and
 stands alone. **#2 is the prerequisite**: the MID Server is the thing both integrations actually run through — the
 JDBC data source's *Use MID Server* field sends its SQL out through `win11-mid`, and the export target writes its CSV
