@@ -7,6 +7,7 @@ A curated collection of ServiceNow development, integration, and infrastructure 
 ## Table of Contents
 
 - [Projects](#projects)
+- [Coming Soon / Work in Progress](#coming-soon--work-in-progress)
 - [Other Projects](#other-projects)
 - [Other — ServiceNow Documentation with TTS](#other-servicenow-documentation-with-tts)
 - [Deep Dives](#deep-dives)
@@ -35,6 +36,16 @@ A curated collection of ServiceNow development, integration, and infrastructure 
 | **#8** | `ServiceNow_ServiceGraph_Demo` | **Service Graph Connector for AWS** run end to end on a free PDI — no SCCM, no Windows Server, no MID Server. Companion lab: **[Service Graph Lab ↗](https://eltonaguiar.github.io/ServiceNow_ServiceGraph_Lab/)** (AI-drafted, then corrected by running it) | **Service Graph Connector for AWS** installed from the Store · IAM credential record + connection test · scheduled **Organization / Hardware** imports · record counts and the IRE inserted-vs-updated table as proof, not vibes — with the lab repo shipping `aws/lab-stack.yaml` (tagged EC2 + VPC to discover) and `aws/iam-readonly-lab-policy.json` | [read ↓](#servicenow_servicegraph_demo) | [repo ↗](https://github.com/eltonaguiar/ServiceNow_ServiceGraph_Demo) |
 
 The numbers are a **dependency order**, not alphabetical.
+
+## Coming Soon / Work in Progress
+
+Not finished. Do not treat these as validated portfolio pieces yet.
+
+| Project | Status | Lab | Elton's run |
+|---------|--------|-----|-------------|
+| ServiceNow : Salesforce E-bonding 2 way integration | WORK IN PROGRESS | [EBOND_ServiceNowSalesforce](https://github.com/eltonaguiar/EBOND_ServiceNowSalesforce) | [screenshots](https://github.com/eltonaguiar/EBOND_ServiceNowSalesforce_RUN/) |
+
+Live lab pages, still being walked: https://eltonaguiar.github.io/EBOND_ServiceNowSalesforce/
 
 ## Other Projects
 
