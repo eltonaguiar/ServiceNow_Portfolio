@@ -1,5 +1,7 @@
 # ServiceNow Portfolio
 
+[🔗 Repo: eltonaguiar/servicenow_portfolio →](https://github.com/eltonaguiar/servicenow_portfolio)
+
 A curated collection of ServiceNow development, integration, and infrastructure projects. Each repository below was built and validated against live instances — no hypothetical code.
 
 ---
